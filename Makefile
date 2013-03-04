@@ -686,9 +686,9 @@ endif # ifdef CONFIG_KALLSYMS
 NetworkOS_S: $(NetworkOS-all) FORCE
 	$(call if_changed_rule,NetworkOS__)
 	$(Q)rm -f .old_version
-NetworkOS:
+NetworkOS:prepare scripts PARSE_TREE
 	make -C src/
-NetworkOS_old: NetworkOS_S
+test_notused: NetworkOS_S
 ifeq ($(SKIP_STRIP),y)
 	$(Q)cp $< $@
 else
@@ -952,7 +952,7 @@ MRPROPER_FILES += .config .config.old include/asm .version .old_version \
 #
 clean: rm-dirs  := $(CLEAN_DIRS)
 clean: rm-files := $(CLEAN_FILES)
-clean-dirs      := $(addprefix _clean_,$(srctree) $(NetworkOS-alldirs))
+clean-dirs      := $(addprefix _clean_,$(srctree))
 
 PHONY += $(clean-dirs) clean archclean
 $(clean-dirs):
@@ -961,10 +961,13 @@ $(clean-dirs):
 clean: archclean $(clean-dirs)
 	$(call cmd,rmdirs)
 	$(call cmd,rmfiles)
+	touch .config
+	make -C src/ clean
 	@find . $(RCS_FIND_IGNORE) \
 		\( -name '*.[oas]' -o -name '*.ko' -o -name '.*.cmd' \
 		-o -name '.*.d' -o -name '.*.tmp' -o -name '*.mod.c' \) \
 		-type f -print | xargs rm -f
+	rm -rf .config include
 
 PHONY += doc-clean
 doc-clean: rm-files := docs/NetworkOS.pod \
@@ -999,6 +1002,7 @@ distclean: mrproper
 		-o -name '.*.rej' -o -name '*.tmp' -o -size 0 \
 		-o -name '*%' -o -name '.*.cmd' -o -name 'core' \) \
 		-type f -print | xargs rm -f
+	rm -rf include
 
 
 # Packaging of the kernel to various formats

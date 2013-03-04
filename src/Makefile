@@ -1,4 +1,4 @@
-#include ../.config
+include ${TOPDIR}/.config
 
 all:
 ifdef CONFIG_LAYER3
@@ -13,3 +13,18 @@ endif
 ifdef CONFIG_SYSTEM
 	make -C System/
 endif
+
+clean:
+ifdef CONFIG_LAYER3
+	make -C Layer-3/ clean
+endif
+ifdef CONFIG_LAYER2
+	make -C Layer-2/ clean
+endif
+ifdef CONFIG_APPS
+	make -C Apps clean
+endif
+ifdef CONFIG_SYSTEM
+	make -C System/ clean
+endif
+
