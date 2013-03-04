@@ -967,7 +967,6 @@ clean: archclean $(clean-dirs)
 		\( -name '*.[oas]' -o -name '*.ko' -o -name '.*.cmd' \
 		-o -name '.*.d' -o -name '.*.tmp' -o -name '*.mod.c' \) \
 		-type f -print | xargs rm -f
-	rm -rf .config include
 
 PHONY += doc-clean
 doc-clean: rm-files := docs/NetworkOS.pod \
@@ -1002,7 +1001,7 @@ distclean: mrproper
 		-o -name '.*.rej' -o -name '*.tmp' -o -size 0 \
 		-o -name '*%' -o -name '.*.cmd' -o -name 'core' \) \
 		-type f -print | xargs rm -f
-	rm -rf include
+	rm -rf include final
 
 
 # Packaging of the kernel to various formats

@@ -3,7 +3,7 @@
 # see scripts/kbuild/config-language.txt.
 #
 
-mainmenu "Open Switch Solution"
+mainmenu "Network-OS"
 
 choice
 	prompt "Platform"
@@ -61,28 +61,11 @@ endmenu
 
 menu 'Layer 3 Config'
 
-config ZEBRA_RTM
-	bool "Zebra RTM"
+config LAYER3
+	bool "Enables Layer 3 Support"
 	default y
 	help
-	  Enables Zebra RTM
-endmenu
-
-menu 'TCP/IP Layer'
-choice
-	prompt "TCP/IP "
-	default OPENSWITCH_TCP_IP
-	help
-	  There are 2 types
-	  - OPEN Switch TCPIP : It is a clone/copy of LWIP
-	  - OS TCP/IP : Not Supoorted
-
-config OPENSWITCH_TCP_IP
-	bool "Open Switch TCP/IP (LWIP)"
-config OS_TCP_IP
-	bool "Operating System  TCP/IP stack"
-endchoice
-
+	  Enables Layer3 Support
 endmenu
 
 menu 'Application Layer'
@@ -144,7 +127,7 @@ config DEBUG
 	bool "Build with extra Debugging symbols"
 	default y
 	help
-	  Say Y here if you wish to examine Open Switch Solution internals while
+	  Say Y here if you wish to examine Network-OS internals while
 	  running. This increases the size of the binary considerably, and
 	  should only be used when doing development. If you are doing
 	  development and want to debug it, answer Y.
