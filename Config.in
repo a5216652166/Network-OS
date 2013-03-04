@@ -82,6 +82,12 @@ config TELNET
 	help
 	  This Enables telnet client and server in your Switch
 
+config TFTP
+	bool "TFTP client/server"
+	default y
+	help
+	  This Enables TFTP client and server in your Switch
+
 config TRACE_ROUTE
 	bool "Traceroute"
 	default y
