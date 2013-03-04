@@ -70,6 +70,12 @@ endmenu
 
 menu 'Application Layer'
 
+config APPS
+	bool "Enables Application"
+	default y
+	help
+	  Enables Application Support
+
 config TELNET
 	bool "Telnet client/server"
 	default y
@@ -88,11 +94,11 @@ config DHCP_SERVER
 	help
 	   Say Y here if you want DHCP server to be enabled
 
-config SNTP_CLIENT
-	bool "SNTP Client"
+config NTP
+	bool "NTP Client, Server"
 	default y
 	help
-	   Say Y here if you want SNTP Client to be enabled
+	   Say Y here if you want NTP Client and Server to be enabled
 endmenu
 
 
