@@ -18,6 +18,8 @@
 #include <time.h>
 #include "list.h"
 #include "common_types.h"
+#include "task.h"
+#include "libproto.h"
 
 
 #define MAX_MSG_Q   10

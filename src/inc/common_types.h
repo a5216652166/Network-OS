@@ -17,6 +17,7 @@ typedef struct {
     /** Six octet holding the MAC address */
     uint8_t octet[6];
 } cparser_macaddr_t;
+typedef void * TIMER_ID;
 
 #define UNUSED_PARAM  __attribute__((unused))
 #endif

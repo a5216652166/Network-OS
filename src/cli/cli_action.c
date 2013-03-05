@@ -125,8 +125,6 @@ cparser_result_t cparser_cmd_config_exit(cparser_context_t *context)
 
 cparser_result_t cparser_cmd_show_mac_address_table(cparser_context_t *context UNUSED_PARAM)
 {
-	if (!show_mac_table ())
-		return CPARSER_OK;
 	return CPARSER_NOT_OK;
 }
 

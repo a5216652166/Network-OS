@@ -688,7 +688,8 @@ NetworkOS_S: $(NetworkOS-all) FORCE
 	$(Q)rm -f .old_version
 NetworkOS:prepare scripts PARSE_TREE
 	make -C src/
-	cd final/opt && tar -cvzf ../../NetworkOS.tgz NetworkOS
+	cd final/opt && rm -rf NetworkOS/include/ NetworkOS/man NetworkOS/share/man/ NetworkOS/share/info/ \
+	&& tar -cvzf ../../NetworkOS.tgz NetworkOS
 	@echo "Build is successful ... Created "NetworkOS.tgz""
 test_notused: NetworkOS_S
 ifeq ($(SKIP_STRIP),y)

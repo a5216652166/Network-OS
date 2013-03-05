@@ -5,7 +5,7 @@ show users
 //show arp
 
 //Displays the CPU usage of the task
-show task-cpu
+//show task-cpu
 
 //Display MAC table
 //show mac-address-table

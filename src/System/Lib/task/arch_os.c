@@ -19,13 +19,14 @@
 #include <unistd.h>
 #include <sys/syscall.h>   /* For SYS_xxx definitions */
 #include "common_types.h"
+#include "task.h"
+#include "libproto.h"
 #include "list.h"
 
 tmtaskid_t tsk_selfid (void);
 tmtask_t           * get_tsk_info_frm_id (tmtaskid_t tskid);
 void * tsk_wrap (void *ptskarg);
 int init_task_cpu_usage_moniter_timer (void);
-void track_cpu_usage (void *);
 int  show_cpu_usage (void);
 
 static TIMER_ID cpu_timer;
@@ -302,7 +303,7 @@ int EvtRx_timed_wait (EVT_T *evt, int *pevent, int event, int secs, int nsecs)
 		err =  pthread_cond_timedwait (&evt->evt_cnd, &evt->evt_mtx, &ts);
 		if (err == ETIMEDOUT) {
 			pthread_mutex_unlock (&evt->evt_mtx);
-			return ERR_TIMEOUT;
+			return ETIMEDOUT;
 		}
 	}
 
@@ -367,15 +368,6 @@ void EvtSignal (EVT_T *evt)
 		return;
 	pthread_cond_signal (&evt->evt_cnd);
 	pthread_mutex_unlock (&evt->evt_mtx);
-}
-
-int init_task_cpu_usage_moniter_timer (void)
-{
-	setup_timer (&cpu_timer, track_cpu_usage, NULL);
-
-	mod_timer (cpu_timer, 5 * tm_get_ticks_per_second ());
-
-	return 0;
 }
 
 static int get_usage(pid_t pid, struct pstat_temp* result)
@@ -477,29 +469,7 @@ int show_cpu_usage (void)
 	return 0;
 }
 
-void track_cpu_usage (void *unused UNUSED_PARAM)
-{
-	register struct list_head *node = NULL;
-	register task_t  *tskinfo = NULL;
-
-	list_for_each (node, (&tsk_hd))
-	{
-		struct pstat_temp current;
-
-		memset (&current, 0, sizeof(current));
-
-		tskinfo = (task_t *) node;
-
-		get_usage (tskinfo->tsk_pid, &current);
-
-		tskinfo->cpu_stats.utime = current.utime + current.cutime;
-		tskinfo->cpu_stats.stime = current.stime + current.cstime;
-		tskinfo->cpu_stats.tcpu = current.tcpu;
-	}
-	mod_timer (cpu_timer, 1 * tm_get_ticks_per_second ());
-}
-
-err_t sys_sem_new(sync_lock_t *slock, u8_t count)
+int sys_sem_new(sync_lock_t *slock, int count)
 {
 	if (!slock)
 		return -1;
@@ -518,7 +488,7 @@ int sys_sem_wait (sync_lock_t *slock)
 {
 	return sync_lock (slock);
 }
-u32_t sys_arch_sem_wait(sync_lock_t *s, uint32_t msecs)
+unsigned int sys_arch_sem_wait(sync_lock_t *s, uint32_t msecs)
 {
 	unsigned int nsecs = msecs * 1000 * 1000;
 	unsigned int secs = nsecs / (1000 * 1000 * 1000);
@@ -538,94 +508,3 @@ int sys_sem_valid(sync_lock_t *sem)
 
 	return sem_getvalue(sem, &val);	
 }
-void sys_sem_set_invalid(sync_lock_t *sem)
-{
-	sem = sem;
-}
-#if 0
-sys_mutex_new(mu) ERR_OK
-sys_mutex_lock(mu)
-sys_mutex_unlock(mu)
-sys_mutex_free(mu)
-sys_mutex_valid(mu) 0
-sys_mutex_set_invalid(mu)
-#endif
-
-/** Create a new mbox of specified size
- * @param mbox pointer to the mbox to create
- * @param size (miminum) number of messages in this mbox
- * @return ERR_OK if successful, another err_t otherwise */
-err_t sys_mbox_new(sys_mbox_t *mbox, int max_msg)
-{
-	if (!max_msg)
-		max_msg = 100; /*FIXME*/
-	if (!(*mbox = msg_create_Q ("sys_box", max_msg, sizeof (unsigned long))))
-		return -ENOMEM;
-	return 0;
-	
-}
-/** Post a message to an mbox - may not fail
- * -> blocks if full, only used from tasks not from ISR
- * @param mbox mbox to posts the message
- * @param msg message to post (ATTENTION: can be NULL) */
-void sys_mbox_post(sys_mbox_t *mbox, void *msg)
-{
-	msg_send (*mbox, msg, sizeof (unsigned long));
-}
-/** Try to post a message to an mbox - may fail if full or ISR
- * @param mbox mbox to posts the message
- * @param msg message to post (ATTENTION: can be NULL) */
-err_t sys_mbox_trypost(sys_mbox_t *mbox, void *msg)
-{
-	return msg_send (*mbox, msg, sizeof (unsigned long));
-}
-/** Wait for a new message to arrive in the mbox
- * @param mbox mbox to get a message from
- * @param msg pointer where the message is stored
- * @param timeout maximum time (in milliseconds) to wait for a message
- * @return time (in milliseconds) waited for a message, may be 0 if not waited
-           or SYS_ARCH_TIMEOUT on timeout
- *         The returned time has to be accurate to prevent timer jitter! */
-u32_t sys_arch_mbox_fetch(sys_mbox_t *mbox, void **msg, u32_t timeout)
-{
-	if (timeout)
-		return msg_rcv_timed (*mbox, (char **)msg, sizeof (unsigned long), timeout);
-	else
-		return msg_rcv (*mbox, (char **)msg, sizeof (unsigned long));
-}
-/* Allow port to override with a macro, e.g. special timout for sys_arch_mbox_fetch() */
-#ifndef sys_arch_mbox_tryfetch
-/** Wait for a new message to arrive in the mbox
- * @param mbox mbox to get a message from
- * @param msg pointer where the message is stored
- * @param timeout maximum time (in milliseconds) to wait for a message
- * @return 0 (milliseconds) if a message has been received
- *         or SYS_MBOX_EMPTY if the mailbox is empty */
-u32_t sys_arch_mbox_tryfetch(sys_mbox_t *mbox, void **msg)
-{
-	return msg_rcv (*mbox, (char **)msg, sizeof (unsigned long));
-}
-#endif
-/** For now, we map straight to sys_arch implementation. */
-#define sys_mbox_tryfetch(mbox, msg) sys_arch_mbox_tryfetch(mbox, msg)
-/** Delete an mbox
- * @param mbox mbox to delete */
-void sys_mbox_free(sys_mbox_t *mbox)
-{
-	msg_Q_delete (*mbox);
-}
-#define sys_mbox_fetch(mbox, msg) sys_arch_mbox_fetch(mbox, msg, 0)
-#ifndef sys_mbox_valid
-/** Check if an mbox is valid/allocated: return 1 for valid, 0 for invalid */
-int sys_mbox_valid(sys_mbox_t *mbox)
-{
-	return mq_vaild (*mbox);
-}
-#endif
-#ifndef sys_mbox_set_invalid
-/** Set an mbox invalid so that sys_mbox_valid returns 0 */
-void sys_mbox_set_invalid(sys_mbox_t *mbox)
-{
-	mbox = mbox;
-}
-#endif

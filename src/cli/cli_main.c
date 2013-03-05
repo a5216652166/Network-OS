@@ -206,6 +206,9 @@ int main (void)
 	/*finally kick-start the shell thread*/
 	spawn_cli_thread (0);
 
+	while (1)
+		sleep (100);
+
 	return 0;
 }
 

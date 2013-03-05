@@ -1,6 +1,6 @@
 include ${TOPDIR}/.config
 
-all: LIB1 LIB2
+all: LIB1 LIB2 LIB3
 
 LIB_TOP_DIR=${TOPDIR}/src/System/Lib
 
@@ -8,7 +8,8 @@ LIB1_src=${LIB_TOP_DIR}/hash/hashlib.c
 LIB2_src=${LIB_TOP_DIR}/mempool/mem_main.c 
 LIB3_src=${LIB_TOP_DIR}/task/arch_os.c
 LIB3_src+=${LIB_TOP_DIR}/task/msg_queue.c
-LIB3_srci+=${LIB_TOP_DIR}/task/multi-core.c
+LIB3_src+=${LIB_TOP_DIR}/task/multi-core.c
+LIB3_src+=${LIB_TOP_DIR}/task/tsk_main.c
 
 
 LIB1_OBJ = $(LIB1_src:.c=.o)
