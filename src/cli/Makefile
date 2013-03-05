@@ -31,6 +31,7 @@ $(CLI_OBJ) : %.o : %.c Makefile
 	$(CC) -c $(CFLAGS) $< -o $@
 cli: $(CLIS_OBJ)
 	$(CC) $(LD_FLAGS) -o cli $(CLIS_SRCC_DIR)/*.o $(TOPDIR)/src/System/Lib/libmempool.a $(TOPDIR)/src/System/Lib/libtask.a -lrt -lpthread
+	mkdir -p  ${TOPDIR}/final/opt/NetworkOS/sbin/
 	install -s -m755 cli ${TOPDIR}/final/opt/NetworkOS/sbin/	
 clean:
 	rm -f $(CLIS_SRCC_DIR)/*.o cli $(CLIS_SRCC_DIR)/cparser_tree.*

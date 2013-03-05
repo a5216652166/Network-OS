@@ -303,7 +303,7 @@ DEPMOD		= /sbin/depmod
 KALLSYMS	= scripts/kallsyms
 PERL		= perl
 CHECK		= sparse
-INCLUDE         = -I$(srctree)/src/inc  -I$(srctree)/src/System/Lib/inc/  -I$(srctree)/src/cli/ -I$(srctree)/src/platform/inc/linux
+INCLUDE         = -I$(srctree)/src/inc  -I$(srctree)/src/System/Lib/inc/  -I$(srctree)/src/cli/ -I$(srctree)/src/platform/inc/linux -include $(srctree)/include/autoconf.h
 
 CHECKFLAGS     := -D__linux__ -Dlinux -D__STDC__ -Dunix -D__unix__ -Wbitwise $(CF)
 MODFLAGS	= -DMODULE
@@ -688,6 +688,7 @@ NetworkOS_S: $(NetworkOS-all) FORCE
 	$(Q)rm -f .old_version
 NetworkOS:prepare scripts PARSE_TREE
 	make -C src/
+	cp fs/* final/opt/NetworkOS/
 	cd final/opt && rm -rf NetworkOS/include/ NetworkOS/man NetworkOS/share/man/ NetworkOS/share/info/ \
 	&& tar -cvzf ../../NetworkOS.tgz NetworkOS
 	@echo "Build is successful ... Created "NetworkOS.tgz""
