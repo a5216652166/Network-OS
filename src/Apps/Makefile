@@ -15,6 +15,8 @@ ifdef CONFIG_TFTP
 	cd netkit-tftp-0.17 && ./configure  --prefix=${TOPDIR}/final/opt/NetworkOS/ && make && make install DESTDIR=${TOPDIR}/final/
 endif
 
+	cd xinetd-2.3.15 && ./configure  --prefix=${TOPDIR}/final/opt/NetworkOS/ && make && make install DESTDIR=${TOPDIR}/final/
+
 clean:
 ifdef CONFIG_NTP
 	cd ntp-4.2.6p5 &&  make distclean
@@ -29,4 +31,4 @@ endif
 ifdef CONFIG_TFTP
 	cd netkit-tftp-0.17 &&  make distclean
 endif
-
+	cd xinetd-2.3.15 && make distclean
