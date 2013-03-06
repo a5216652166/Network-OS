@@ -80,7 +80,7 @@ char *vty_cwd = NULL;
 static int vty_config;
 
 /* Login password check. */
-static int no_password_check = 0;
+static int no_password_check = 1;
 
 /* Restrict unauthenticated logins? */
 static const u_char restricted_mode_default = 0;
