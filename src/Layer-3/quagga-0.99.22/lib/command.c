@@ -3469,8 +3469,8 @@ cmd_init (int terminal)
   cmdvec = vector_init (VECTOR_MIN_SIZE);
 
   /* Default host value settings. */
-  host.name = NULL;
-  host.password = NULL;
+  host.name = "NetworkOS";
+  host.password = "Admin123";
   host.enable = NULL;
   host.logfile = NULL;
   host.config = NULL;
