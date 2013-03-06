@@ -5,33 +5,34 @@ CODE_DIR=${TOPDIR}/src
 CLIS_CODE_DIR = $(CODE_DIR)/cli
 CLIS_INC_DIR =  $(CLIS_CODE_DIR)/ 
 CLIS_SRCC_DIR = $(CLIS_CODE_DIR)
+CLIS_SRCS += $(CLIS_SRCC_DIR)/vty.c
+CLIS_SRCS += $(CLIS_SRCC_DIR)/vtysh.c
+CLIS_SRCS += $(CLIS_SRCC_DIR)/vtysh_config.c
+CLIS_SRCS += $(CLIS_SRCC_DIR)/vtysh_main.c
+CLIS_SRCS += $(CLIS_SRCC_DIR)/vtysh_user.c
+CLIS_SRCS += $(CLIS_SRCC_DIR)/vtysh_cmd.c
 
-CLIS_SRCS += $(CLIS_SRCC_DIR)/cparser.c
-CLIS_SRCS += $(CLIS_SRCC_DIR)/cparser_token.c
-CLIS_SRCS += $(CLIS_SRCC_DIR)/cparser_token_tbl.c
-CLIS_SRCS += $(CLIS_SRCC_DIR)/cparser_io_unix.c
-CLIS_SRCS += $(CLIS_SRCC_DIR)/cparser_fsm.c
-CLIS_SRCS += $(CLIS_SRCC_DIR)/cparser_line.c
-CLIS_SRCS += $(CLIS_SRCC_DIR)/cparser_tree.c
-CLIS_SRCS += $(CLIS_SRCC_DIR)/login.c
-CLIS_SRCS += $(CLIS_SRCC_DIR)/user_mgmt.c
-CLIS_SRCS += $(CLIS_SRCC_DIR)/cli_main.c
-CLIS_SRCS += $(CLIS_SRCC_DIR)/cli_action.c
-
-CFLAGS += -I$(CLIS_INC_DIR)
+CFLAGS += -I$(CLIS_INC_DIR) -I../Layer-3/quagga-0.99.22 -I../Layer-3/quagga-0.99.22/lib
+CFLAGS +=  -DSYSCONFDIR=\"/opt/NetworkOS/etc/\" -include ${TOPDIR}/src/Layer-3/quagga-0.99.22/config.h
 
 CLI_OBJ = $(CLIS_SRCS:.c=.o)
 
-all: PARSE_TREE $(CLI_OBJ) cli
+CLI_LIBS = $(TOPDIR)/src/Layer-3/quagga-0.99.22/ripngd/libripng.a  \
+	$(TOPDIR)/src/Layer-3/quagga-0.99.22/babeld/libbabel.a \
+	$(TOPDIR)/src/Layer-3/quagga-0.99.22/lib/.libs/libzebra.a \
+	$(TOPDIR)/src/Layer-3/quagga-0.99.22/ripd/librip.a \
+	$(TOPDIR)/src/Layer-3/quagga-0.99.22/bgpd/libbgp.a \
+	$(TOPDIR)/src/Layer-3/quagga-0.99.22/ospfd/.libs/libospf.a \
+	$(TOPDIR)/src/Layer-3/quagga-0.99.22/ospf6d/libospf6.a \
+	$(TOPDIR)/src/Layer-3/quagga-0.99.22/ospfclient/.libs/libospfapiclient.a
 
-PARSE_TREE:
-	$(CLIS_CODE_DIR)/mk_parser.py -o ./ $(CLIS_SRCC_DIR)/clicmds/cmd.cli
+all:  $(CLI_OBJ) cli
 
 $(CLI_OBJ) : %.o : %.c Makefile
 	$(CC) -c $(CFLAGS) $< -o $@
 cli: $(CLIS_OBJ)
-	$(CC) $(LD_FLAGS) -o cli $(CLIS_SRCC_DIR)/*.o $(TOPDIR)/src/System/Lib/libmempool.a $(TOPDIR)/src/System/Lib/libtask.a -lrt -lpthread
+	$(CC) $(LD_FLAGS) -o cli $(CLI_OBJ) $(CLI_LIBS) -lreadline -lrt -lcrypt  -lcap
 	mkdir -p  ${TOPDIR}/final/opt/NetworkOS/sbin/
-	install -s -m755 cli ${TOPDIR}/final/opt/NetworkOS/sbin/	
+	install -m755 cli ${TOPDIR}/final/opt/NetworkOS/sbin/	
 clean:
 	rm -f $(CLIS_SRCC_DIR)/*.o cli $(CLIS_SRCC_DIR)/cparser_tree.*
