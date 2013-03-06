@@ -10,6 +10,9 @@ logout
 // Enable privileged mode
 enable privileged-mode
 
+//Exit from the cli
+exit
+
 // Run the configuration script
 run-script <STRING:filename>
 

@@ -259,7 +259,12 @@ void *cmdinterface(void *unused)
 
 	rc = cparser_init(&this_cli[session].parser.cfg, &this_cli[session].parser);
 
+        cli_printf("\033[2J");
+        cli_printf("\033[0;0f");
+
 	cparser_run(&this_cli[session].parser);
+
+	exit (0);
 
 	return NULL;
 }

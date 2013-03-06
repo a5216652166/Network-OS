@@ -41,11 +41,12 @@
 #include "cparser_io.h"
 #include "cparser_fsm.h"
 
-void show_login_prompt(void);
 
 void
 cparser_print_prompt (const cparser_t *parser)
-{
+{  
+    if (parser->done)
+	return;
     assert(parser);
     if (cparser_is_in_privileged_mode(parser)) {
         parser->cfg.printc(parser, '+');
@@ -644,7 +645,6 @@ cparser_run (cparser_t *parser)
     if (!VALID_PARSER(parser)) return CPARSER_ERR_INVALID_PARAMS;
 
     parser->cfg.io_init(parser);
-    show_login_prompt ();
     cparser_print_prompt(parser);
     parser->done = 0;
 

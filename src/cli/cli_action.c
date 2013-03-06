@@ -93,7 +93,8 @@ cparser_result_t cparser_cmd_end(cparser_context_t *context UNUSED_PARAM)
 }
 cparser_result_t cparser_cmd_exit(cparser_context_t *context)
 {
-	return cparser_submode_exit(context->parser);
+	context->parser->done = 1;
+	return CPARSER_OK;
 }
 cparser_result_t cparser_cmd_disable_privileged_mode(cparser_context_t *context)
 {
