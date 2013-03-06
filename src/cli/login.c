@@ -30,9 +30,6 @@ int process_logout(void)
 
 void show_login_prompt(void)
 {     
-	cli_printf("************************************************************\n");
-	cli_printf("*       $$      Open Source Switch Solution     $$         *\n");
-	cli_printf("************************************************************");
 	process_login ();
 }
 
