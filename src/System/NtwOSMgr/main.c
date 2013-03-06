@@ -1,30 +1,44 @@
 #include "common_types.h"
+#include "signal.h"
 
 struct process_info {
 	char             *name;
 	char             *binaryname;
-	char             *arg1;
-	char             *arg2;
-	char             *arg3;
-	char             *arg4;
+	char             *arg[4];
 	clock_t          start_time;
 	int              pid;
 	
 } process[] = {
 #ifdef CONFIG_LAYER3
-	{"RTM", "/opt/NetworkOS/sbin/zebra", "-u root -d", NULL, NULL, NULL},
-	{"BGP", "/opt/NetworkOS/sbin/bgpd", "-u root -d", NULL, NULL, NULL},
-	{"OSPF", "/opt/NetworkOS/sbin/ospfd", "-u root -d", NULL, NULL, NULL},
+	{"RTM", "/opt/NetworkOS/sbin/zebra", "zebra", "-u", "root", NULL, 0, 0},
+	{"BGP", "/opt/NetworkOS/sbin/bgpd",  "bgpd",  "-u", "root", NULL, 0, 0},
+	{"OSPF", "/opt/NetworkOS/sbin/ospfd","ospfd", "-u", "root", NULL, 0, 0},
 #endif
 //	{"CLI", "/opt/NetworkOS/sbin/cli", NULL, NULL, NULL, NULL},
 	{NULL,  NULL,       NULL, NULL, NULL, NULL}
 }; 
 
+void terminate_all_process (int signo)
+{
+	int  i =  sizeof (process) / sizeof (process[0]);
+	if (signo == SIGTERM) {
+		do {
+			i--;
+			if (process[i].name && process[i].binaryname && process[i].pid) {
+				kill (process[i].pid, SIGKILL);
+			}
+		}while (i);
+	}
+	unlink ("/opt/NetworkOS/NwtMgrDone");
+	exit (0);
+}
+
 int main (int argc, char **argv)
 {
 	int i = 0;
 	int pid = 0;
-	printf ("Network-OS Init");
+	
+	signal (SIGTERM, terminate_all_process);
 
 	while (i < sizeof (process) / sizeof (process[0])) {
 		if (process[i].name && process[i].binaryname) {
@@ -36,8 +50,8 @@ int main (int argc, char **argv)
 					process[i].name);
 					break;
 				case 0:
-					execlp(process[i].binaryname, process[i].arg1, process[i].arg2, 
-					       process[i].arg3, process[i].arg4);
+					setsid();
+					execvp(process[i].binaryname, process[i].arg);
 					break;
 				default:
 					process[i].pid = pid;
