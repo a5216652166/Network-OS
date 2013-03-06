@@ -94,11 +94,11 @@ config TRACE_ROUTE
 	help
 	   Say Y here if you want traceroute to be enabled
 
-config DHCP_SERVER
-	bool "DHCP Server"
+config DHCP
+	bool "DHCP Server and Client"
 	default y
 	help
-	   Say Y here if you want DHCP server to be enabled
+	   Say Y here if you want DHCP server and Client to be enabled
 
 config NTP
 	bool "NTP Client, Server"
