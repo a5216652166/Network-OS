@@ -316,7 +316,7 @@ AFLAGS_KERNEL	=
 
 # Use LINUXINCLUDE when you must reference the include/ directory.
 # Needed to be compatible with the O= option
-CFLAGS		:= $(CFLAGS) $(INCLUDE)
+CFLAGS		:= $(CFLAGS) $(INCLUDE) -DNETWORKOS_VERSION=\"${VERSION}.${PATCHLEVEL}.${SUBLEVEL}${EXTRAVERSION}\"
 # Added only to final link stage of NetworkOS binary
 CFLAGS_NetworkOS	:= $(CFLAGS_NetworkOS)
 CPPFLAGS	:= $(CPPFLAGS)
