@@ -13,8 +13,10 @@ struct process_info {
 	{"RTM", "/opt/NetworkOS/sbin/zebra", "zebra", "-u", "root", NULL, 0, 0},
 	{"BGP", "/opt/NetworkOS/sbin/bgpd",  "bgpd",  "-u", "root", NULL, 0, 0},
 	{"OSPF", "/opt/NetworkOS/sbin/ospfd","ospfd", "-u", "root", NULL, 0, 0},
+	{"OSPF6D", "/opt/NetworkOS/sbin/ospf6d", "ospfd6d", "-u", "root", NULL, 0, 0},
+	{"RIP", "/opt/NetworkOS/sbin/ripd", "ripd", "-u", "root", NULL, 0, 0},
+	{"RIPNGD", "/opt/NetworkOS/sbin/ripngd", "ripngd", "-u", "root", NULL, 0, 0},
 #endif
-//	{"CLI", "/opt/NetworkOS/sbin/cli", NULL, NULL, NULL, NULL},
 	{NULL,  NULL,       NULL, NULL, NULL, NULL}
 }; 
 
