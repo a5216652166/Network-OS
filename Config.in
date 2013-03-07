@@ -72,7 +72,7 @@ menu 'Application Layer'
 
 config APPS
 	bool "Enables Application"
-	default y
+	default n
 	help
 	  Enables Application Support
 
