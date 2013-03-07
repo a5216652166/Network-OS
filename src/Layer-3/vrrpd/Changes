@@ -1,0 +1,27 @@
+0.4 - Sep 26th 2000
+- written a man(8) page
+- implemented the password authentication rfc2338.10.2 
+  (not tested because i have a single computer :)
+- change the state according to unix signal. USR1=be master, USR2=be backup
+  pid stored in a file vrrpd_[IF]_[VRID].pid (e.g. vrrp_eth0_50.pid)
+  WARNING: for guru only
+
+0.3 - june 8th 2000
+- add -n option. if it is set, vrrpd doesnt handle the virtual mac address.
+  It isnt compliant to the rfc. but in practice it work and allow to have
+  several virtual groups per interface (workaround the kernel assumption
+  1 MAC per physical interface)
+- fix a compilation problem with glibc-2.1.1 or below, MSG_TRUNC is undefined.
+  reported by Hannes R. Boehm 
+
+0.2 - may 18th 2000
+- knowledgable comment and bug fix from Hannes R. Boehm 
+	(VRRP_IS_BAD_PRIORITY, authentication field)
+- gratuitous arp for non-vrrp addresses when the master becomes backup
+- bug fix not to remove the primary address when the master is the address
+  owner and become backup.
+- no more depends on 'ip' from iproute tools. now netlink is used directly
+  to set/remove the ip addresses.
+
+0.1 - may 14th 2000
+- release of the first version
