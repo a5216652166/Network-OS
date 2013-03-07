@@ -1,0 +1,34 @@
+NAME      : NetworkOSManager.txt
+PURPOSE   : Software Requirements for NetworkOS manager
+REVISION  : 0.1
+DATE      : 08/MAR/2013
+
+
+  Revision      |       Author   |    Date
+=================================================
+#  0.1                H.Joker       08/03/2013          
+#
+#================================================
+
+
+Requirements
+============
+
+R1 -> MUST start all process in specific order
+
+R2 -> MUST Kill all process in reverse order on reboot or restartin the networkOS
+
+R3 -> MUST Monitor all process, restart If it terminated. Have a restart limit.
+
+R4 -> MUST have CPU usage limit for each process. Kill the If process exceeds the threshold.
+
+
+CLI commands
+============
+
+1.  show process
+2.  show process cpu
+3.  show process memory
+4.  show process <process-name> stack
+5.  debug process <process-name>
+6.  show process detail
