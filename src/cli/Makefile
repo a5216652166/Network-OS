@@ -11,6 +11,7 @@ CLIS_SRCS += $(CLIS_SRCC_DIR)/vtysh_config.c
 CLIS_SRCS += $(CLIS_SRCC_DIR)/vtysh_main.c
 CLIS_SRCS += $(CLIS_SRCC_DIR)/vtysh_user.c
 CLIS_SRCS += $(CLIS_SRCC_DIR)/vtysh_cmd.c
+CLIS_SRCS += $(CLIS_SRCC_DIR)/command.c
 
 CFLAGS += -I$(CLIS_INC_DIR) -I../Layer-3/quagga-0.99.22 -I../Layer-3/quagga-0.99.22/lib
 CFLAGS +=  -DSYSCONFDIR=\"/opt/NetworkOS/etc/\" -include ${TOPDIR}/src/Layer-3/quagga-0.99.22/config.h
@@ -34,5 +35,6 @@ cli: $(CLIS_OBJ)
 	$(CC) $(LD_FLAGS) -o cli $(CLI_OBJ) $(CLI_LIBS) -lreadline -lrt -lcrypt  -lcap
 	mkdir -p  ${TOPDIR}/final/opt/NetworkOS/sbin/
 	install -m755 cli ${TOPDIR}/final/opt/NetworkOS/sbin/	
+	chmod u+s ${TOPDIR}/final/opt/NetworkOS/sbin/cli
 clean:
 	rm -f $(CLIS_SRCC_DIR)/*.o cli $(CLIS_SRCC_DIR)/cparser_tree.*
