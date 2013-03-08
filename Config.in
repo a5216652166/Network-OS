@@ -9,20 +9,8 @@ choice
 	prompt "Platform"
 	default PLATFORM_LINUX
 	help
-	  There are 3 Platforms currently we support:
-	  - Linux simulation: Simulates Open Switch On Linux.
+	  There are 1 Platforms currently we support:
 	  - Linux: Run Linux as a router
-	  - Atomthreads: Under Development
-
-config PLATFORM_SIM_LINUX
-	bool "Linux simulation"
-
-config SIM_VIRTUAL_LINK_MGR
-	bool "Virtual link mgr"
-	default y
-	depends on PLATFORM_SIM_LINUX
-	help
-	  Compiles virtual link manager.
 
 config PLATFORM_LINUX
 	bool "Linux"
@@ -30,6 +18,13 @@ config PLATFORM_LINUX
 endchoice
 
 menu 'Layer 2 Config'
+
+config LAYER2
+	bool "Enables Layer 2 Support"
+	default n
+	help
+	  Enables Layer2 Support
+if LAYER2
 
 config BRIDGE_FDB
 	bool "Enable FDB"
@@ -49,14 +44,13 @@ config RSTP
 	default y
 	help
 	   Say Y here if you want RSTP to be enabled
-
 config LINUX_STP
 	bool "Enable Linux Spanning Tree"
 	default y
 	depends on PLATFORM_LINUX
 	help
 	   Say Y here if you want Linux STP to be enabled
-
+endif
 endmenu
 
 menu 'Layer 3 Config'
@@ -66,6 +60,28 @@ config LAYER3
 	default y
 	help
 	  Enables Layer3 Support
+if LAYER3
+
+config BGP
+	bool "Enables BGP Support"
+	default y
+	help
+	  Enables BGP Support
+
+config OSPF
+	bool "Enables OSPF Support"
+	default y
+	help
+	  Enables OSPF Support
+
+config RIP
+	bool "Enables RIP Support"
+	default y
+	help
+	  Enables RIP Support
+endif
+
+
 endmenu
 
 menu 'Application Layer'
