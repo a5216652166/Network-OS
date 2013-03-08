@@ -2,7 +2,7 @@ include ${TOPDIR}/.config
 
 all:
 	make -C System/
-ifndef CONFIG_LAYER3
+ifdef CONFIG_LAYER3
 	make -C Layer-3/
 endif
 ifdef CONFIG_LAYER2

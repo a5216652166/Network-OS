@@ -13,6 +13,15 @@ CLIS_SRCS += $(CLIS_SRCC_DIR)/vtysh_user.c
 CLIS_SRCS += $(CLIS_SRCC_DIR)/vtysh_cmd.c
 CLIS_SRCS += $(CLIS_SRCC_DIR)/command.c
 
+ifdef CONFIG_LINUX_STP
+CLIS_SRCS += $(CLIS_SRCC_DIR)/brlib/libbridge_devif.c
+CLIS_SRCS += $(CLIS_SRCC_DIR)/brlib/libbridge_if.c
+CLIS_SRCS += $(CLIS_SRCC_DIR)/brlib/libbridge_init.c
+CLIS_SRCS += $(CLIS_SRCC_DIR)/brlib/libbridge_misc.c
+CLIS_SRCS += $(CLIS_SRCC_DIR)/linuxstp.c
+CFLAGS += -I${TOPDIR}/src/Layer-2/stp/ -I$(CLIS_SRCC_DIR)/brlib/
+endif
+
 CFLAGS += -I$(CLIS_INC_DIR) -I../Layer-3/quagga-0.99.22 -I../Layer-3/quagga-0.99.22/lib
 CFLAGS +=  -DSYSCONFDIR=\"/opt/NetworkOS/etc/\" -include ${TOPDIR}/src/Layer-3/quagga-0.99.22/config.h
 
