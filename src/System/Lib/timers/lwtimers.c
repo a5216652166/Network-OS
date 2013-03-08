@@ -10,6 +10,7 @@
 
 #include "common_types.h"
 #include "list.h"
+#include "task.h"
 
 #define    SET_TIMER_MGR_STATE(state)    tmrmgrstate = state
 
@@ -291,15 +292,15 @@ static unsigned int get_hrs (void)
 	return get_mins () / (24);
 }
 
+unsigned int tm_get_ticks_per_second (void) 
+{
+	return SYS_MAX_TICKS_IN_SEC;
+}
+
 void show_uptime (void)
 {
 	printf ("Uptime  %d hrs %d mins %d secs %d ticks\n",get_hrs(), 
 		 get_mins() % 60, get_secs() % 60, get_ticks() % tm_get_ticks_per_second ());
-}
-
-unsigned int tm_get_ticks_per_second (void) 
-{
-	return SYS_MAX_TICKS_IN_SEC;
 }
 
 unsigned int milli_secs_to_ticks (unsigned int msecs)

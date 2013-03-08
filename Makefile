@@ -1110,6 +1110,17 @@ clean: $(clean-dirs)
 		\( -name '*.[oas]' -o -name '*.ko' -o -name '.*.cmd' \
 		-o -name '.*.d' -o -name '.*.tmp' -o -name '*.mod.c' \) \
 		-type f -print | xargs rm -f
+	rm -rf  final
+
+
+# Packaging of the kernel to various formats
+# ---------------------------------------------------------------------------
+# rpm target kept for backward compatibility
+package-dir	:= $(srctree)/scripts/package
+
+%pkg: FORCE
+	$(Q)$(MAKE) $(build)=$(package-dir) $@
+rpm: FORCE
 
 # Dummies...
 PHONY += prepare scripts

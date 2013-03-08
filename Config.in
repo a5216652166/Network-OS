@@ -21,7 +21,7 @@ menu 'Layer 2 Config'
 
 config LAYER2
 	bool "Enables Layer 2 Support"
-	default n
+	default y
 	help
 	  Enables Layer2 Support
 if LAYER2

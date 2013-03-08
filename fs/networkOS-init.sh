@@ -32,6 +32,7 @@ touch /opt/NetworkOS/etc/bgpd.conf
 touch /opt/NetworkOS/etc/ospf6d.conf
 touch /opt/NetworkOS/etc/ripd.conf
 touch /opt/NetworkOS/etc/ripngd.conf
+touch /opt/NetworkOS/etc/stpd.conf
 
 
 /opt/NetworkOS/sbin/nosMgr &
