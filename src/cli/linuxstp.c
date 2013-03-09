@@ -18,6 +18,7 @@ extern struct list_head stp_instance_head;
 
 #define STP_DEFAULT_INSTANCE "linux_stp"
 
+
 static int add_interfaces_to_bridge (char *br)
 {
 	int numreqs = 30;
@@ -61,16 +62,6 @@ int stp_set_bridge_times (int fdly, int maxage, int htime, uint16_t vlan_id)
 {
 }
 
-int cparser_cmd_show_spanning_tree(void *context UNUSED_PARAM)
-{
-	if (!show_spanning_tree ())
-		return CMD_SUCCESS;
-	return CMD_WARNING;
-}
-int cparser_cmd_config_spanning_tree(void *context UNUSED_PARAM)
-{
-	return spanning_tree_enable (STP_DEFAULT_INSTANCE);
-}
 int cparser_cmd_config_spanning_tree_priority_priority(void *context UNUSED_PARAM, int32_t *priority_ptr)
 {
 	return CMD_WARNING;
@@ -222,79 +213,10 @@ int cparser_cmd_config_spanning_tree_ethernet_portnum_priority_priority(void *co
 {
 	return CMD_WARNING;
 }
-int cparser_cmd_config_no_spanning_tree(void *context UNUSED_PARAM)
-{
-	return spanning_tree_disable (STP_DEFAULT_INSTANCE);
-}
 
 int  show_spanning_tree  (void)
 {
-	struct stp_instance *pstp_inst = NULL;
-
 	show_bridge (STP_DEFAULT_INSTANCE, NULL);
-
-#if 0
-	list_for_each_entry(pstp_inst, &stp_instance_head, next) {
-
-		if (pstp_inst->stp_enabled) {
-
-			uint8_t *mac = NULL;
-			struct stp_port_entry *p =  NULL;
-
-			int is_root = stp_is_root_bridge (pstp_inst);
-
-			printf ("\n  Spanning tree enabled protocol ieee on\n");
-			printf ("  -------------------------------------- \n\n");
-
-			printf ("  VLAN  : %d\n\n", pstp_inst->vlan_id);
-
-			printf ("  Root ID\n\tPriority    %d\n", pstp_inst->designated_root.prio);
-
-			mac = pstp_inst->designated_root.addr;
-
-			printf ("\tAddress     %02x:%02x:%02x:%02x:%02x:%02x\n", 
-				mac[0],mac[1],mac[2],mac[3],mac[4],mac[5]);
-
-			if (is_root)  {
-				printf ("\tThis bridge is the root\n");
-			}
-
-			printf ("\tHello Time  %d sec  Max Age %d sec  Forward Delay %d sec\n\n",
-					pstp_inst->hello_time, pstp_inst->max_age, pstp_inst->forward_delay);
-
-			printf ("  Bridge ID\n\tPriority    %d\n",pstp_inst->bridge_id.prio);
-
-			mac = pstp_inst->bridge_id.addr;
-
-			printf ("\tAddress     %02x:%02x:%02x:%02x:%02x:%02x\n", 
-					mac[0],mac[1],mac[2],mac[3],mac[4],mac[5]);
-			printf ("\tHello Time  %d sec  Max Age %d sec  Forward Delay %d sec\n",
-				pstp_inst->bridge_hello_time, pstp_inst->bridge_max_age, 
-				pstp_inst->bridge_forward_delay);
-
-			if (!is_root) {
-				printf ("\n\tRoot Port : %d\n", pstp_inst->root_port);
-			}
-
-			if (!list_empty (&pstp_inst->port_list)) {
-				const char *state[] = {"DISABLED", "LISTENING", "LEARNING", 
-					               "FORWARDING", "BLOCKING"};
-				printf ("\nPort   Cost     State      Bridge Id         Prio \n");
-				printf ("----   -----   ------   -----------------    ------\n");
-				list_for_each_entry(p, &pstp_inst->port_list, list) {
-					mac = p->designated_bridge.addr;
-					printf ("%2d   %4d   %10s   %02x:%02x:%02x:%02x:%02x:%02x  %4d\n",
-						p->port_no, p->path_cost, state[p->state],
-						mac[0],mac[1],mac[2],mac[3],mac[4],mac[5],p->priority);
-				}
-			} 	
-		}
-		else {
-			printf ("\n  Spanning tree not enabled on");
-			printf (" VLAN  : %d\n\n", pstp_inst->vlan_id);
-		}
-	}
-#endif
 	return 0;
 }
 
@@ -367,4 +289,39 @@ int set_spanning_bridge_port_prio (uint32_t prio, uint32_t portnum)
 //	stp_set_port_priority (p, prio);
 
 	return 0;
+}
+DEFUN (vtysh_spanning_tree_enable,
+       vtysh_spanning_tree_enable_cmd,
+       "spanning-tree",
+       "Enables Spanning Tree\n")
+{
+	return spanning_tree_enable (STP_DEFAULT_INSTANCE);
+}
+
+DEFUN (vtysh_spanning_tree_disable,
+       vtysh_spanning_tree_disable_cmd,
+       "no spanning-tree",
+       "Negate a command or set its defaults\n"
+       "Disables Spanning Tree\n")
+{
+	return spanning_tree_disable (STP_DEFAULT_INSTANCE);
+}
+
+DEFUN (vtysh_show_spanning_tree,
+       vtysh_show_spanning_tree_cmd,
+       "show spanning-tree",
+       "Show running system information\n"
+       "Spanning Tree Information\n")
+{
+	if (!show_spanning_tree ())
+		return CMD_SUCCESS;
+	return CMD_WARNING;
+}
+
+void init_stp_cli ()
+{
+  br_init ();
+  install_element (CONFIG_NODE, &vtysh_spanning_tree_disable_cmd);
+  install_element (CONFIG_NODE, &vtysh_spanning_tree_enable_cmd);
+  install_element (ENABLE_NODE, &vtysh_show_spanning_tree_cmd);
 }
