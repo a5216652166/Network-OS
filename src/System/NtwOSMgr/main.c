@@ -10,6 +10,7 @@ struct process_info {
 	
 } process[] = {
 
+	{"IFMGR", "/opt/NetworkOS/sbin/ifMgrd", "ifMgrd", "-u", "root", NULL, 0, 0},
 #ifdef CONFIG_STP
 	{"STP", "/opt/NetworkOS/sbin/stpd", "stp", "-u", "root", NULL, 0, 0},
 #endif
