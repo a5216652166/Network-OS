@@ -12,6 +12,7 @@ ifdef CONFIG_APPS
 	make -C Apps
 endif
 	make -C cli
+	make -C IfMgr
 clean:
 	make -C cli clean
 	make -C System/ clean
@@ -25,3 +26,4 @@ ifdef CONFIG_APPS
 	make -C Apps clean
 endif
 
+	make -C IfMgr clean
