@@ -20484,4 +20484,5 @@ vtysh_init_cmd ()
   install_element (OSPF_NODE, &ospf_area_vlink_param2_cmd_vtysh);
   install_element (INTERFACE_NODE, &no_isis_metric_l1_arg_cmd_vtysh);
   install_element (RMAP_NODE, &rmap_call_cmd_vtysh);
+  init_stp_cli ();
 }
