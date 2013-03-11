@@ -866,6 +866,8 @@ ifaddr_ipv4_lookup (struct in_addr *addr, unsigned int ifindex)
 void
 if_init (void)
 {
+  kernel_init ();
+
   iflist = list_new ();
 #if 0
   ifaddr_ipv4_table = route_table_init ();
@@ -873,7 +875,6 @@ if_init (void)
 
   if (iflist) {
     iflist->cmp = (int (*)(void *, void *))if_cmp_func;
-    return;
   }
 
   memset (&if_master, 0, sizeof if_master);
