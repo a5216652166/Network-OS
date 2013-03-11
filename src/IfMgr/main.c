@@ -39,15 +39,9 @@ zebra_capabilities_t _caps_p [] =
 
 struct zebra_privs_t ifMgrd_privs =
 {
-#if defined(QUAGGA_USER)
-  .user = QUAGGA_USER,
-#endif
-#if defined QUAGGA_GROUP
-  .group = QUAGGA_GROUP,
-#endif
-#ifdef VTY_GROUP
-  .vty_group = VTY_GROUP,
-#endif
+  .user = "root",
+  .group = "root",
+  .vty_group = "root",
   .caps_p = _caps_p,
   .cap_num_p = 2,
   .cap_num_i = 0
@@ -66,7 +60,7 @@ int retain_mode = 0;
 char *vty_addr = NULL;
 
 /* RIP VTY connection port. */
-int vty_port = 0;
+int vty_port = 2610;
 
 /* Master of threads. */
 struct thread_master *master;
@@ -177,7 +171,7 @@ main (int argc, char **argv)
   progname = ((p = strrchr (argv[0], '/')) ? ++p : argv[0]);
 
   /* First of all we need logging init. */
-  zlog_default = openzlog (progname, ZLOG_RIP,
+  zlog_default = openzlog (progname, ZLOG_IFMGR,
 			   LOG_CONS|LOG_NDELAY|LOG_PID, LOG_DAEMON);
 
   /* Command line option parse. */

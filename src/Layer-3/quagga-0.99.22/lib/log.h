@@ -54,6 +54,7 @@ typedef enum
   ZLOG_OSPF6,
   ZLOG_ISIS,
   ZLOG_STP,
+  ZLOG_IFMGR,
   ZLOG_MASC
 } zlog_proto_t;
 
