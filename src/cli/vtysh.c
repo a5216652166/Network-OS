@@ -32,7 +32,7 @@
 
 #include "command.h"
 #include "memory.h"
-#include "vtysh/vtysh.h"
+#include "vtysh.h"
 #include "log.h"
 #include "bgpd/bgp_vty.h"
 
@@ -59,6 +59,7 @@ struct vtysh_client
   { .fd = -1, .name = "bgpd", .flag = VTYSH_BGPD, .path = BGP_VTYSH_PATH},
   { .fd = -1, .name = "isisd", .flag = VTYSH_ISISD, .path = ISIS_VTYSH_PATH},
   { .fd = -1, .name = "babeld", .flag = VTYSH_BABELD, .path = BABEL_VTYSH_PATH},
+  { .fd = -1, .name = "ifMgrd", .flag = VTYSH_IFMGR, .path = "/opt/NetworkOS/etc/ifMgrd.vty"},
 };
 
 
@@ -1295,7 +1296,7 @@ ALIAS (vtysh_exit_line_vty,
        "quit",
        "Exit current mode and down to previous mode\n")
 
-DEFUNSH (VTYSH_INTERFACE,
+DEFUNSH (VTYSH_IFMGR,
 	 vtysh_interface,
 	 vtysh_interface_cmd,
 	 "interface IFNAME",
@@ -1307,7 +1308,7 @@ DEFUNSH (VTYSH_INTERFACE,
 }
 
 /* TODO Implement "no interface command in isisd. */
-DEFSH (VTYSH_ZEBRA|VTYSH_RIPD|VTYSH_RIPNGD|VTYSH_OSPFD|VTYSH_OSPF6D,
+DEFSH (VTYSH_IFMGR,
        vtysh_no_interface_cmd,
        "no interface IFNAME",
        NO_STR
