@@ -1,7 +1,6 @@
 include ${TOPDIR}/.config
 
 all:
-	make -C System/
 ifdef CONFIG_LAYER3
 	make -C Layer-3/
 endif
@@ -11,6 +10,7 @@ endif
 ifdef CONFIG_APPS
 	make -C Apps
 endif
+	make -C System/
 	make -C cli
 	make -C IfMgr
 clean:
