@@ -27,14 +27,23 @@ CFLAGS +=  -DSYSCONFDIR=\"/opt/NetworkOS/etc/\" -include ${TOPDIR}/src/Layer-3/q
 
 CLI_OBJ = $(CLIS_SRCS:.c=.o)
 
-CLI_LIBS = $(TOPDIR)/src/Layer-3/quagga-0.99.22/ripngd/libripng.a  \
-	$(TOPDIR)/src/Layer-3/quagga-0.99.22/babeld/libbabel.a \
-	$(TOPDIR)/src/Layer-3/quagga-0.99.22/lib/.libs/libzebra.a \
-	$(TOPDIR)/src/Layer-3/quagga-0.99.22/ripd/librip.a \
-	$(TOPDIR)/src/Layer-3/quagga-0.99.22/bgpd/libbgp.a \
-	$(TOPDIR)/src/Layer-3/quagga-0.99.22/ospfd/.libs/libospf.a \
+CLI_LIBS =  $(TOPDIR)/src/Layer-3/quagga-0.99.22/lib/.libs/libzebra.a 
+ifdef CONFIG_RIP
+CLI_LIBS += $(TOPDIR)/src/Layer-3/quagga-0.99.22/ripngd/libripng.a  \
+            $(TOPDIR)/src/Layer-3/quagga-0.99.22/ripd/librip.a 
+endif
+
+ifdef CONFIG_BABELD
+CLI_LIBS += $(TOPDIR)/src/Layer-3/quagga-0.99.22/babeld/libbabel.a
+endif
+ifdef CONFIG_BGP
+CLI_LIBS +=	$(TOPDIR)/src/Layer-3/quagga-0.99.22/bgpd/libbgp.a 
+endif
+ifdef CONFIG_OSPF
+CLI_LIBS +=	$(TOPDIR)/src/Layer-3/quagga-0.99.22/ospfd/.libs/libospf.a \
 	$(TOPDIR)/src/Layer-3/quagga-0.99.22/ospf6d/libospf6.a \
 	$(TOPDIR)/src/Layer-3/quagga-0.99.22/ospfclient/.libs/libospfapiclient.a
+endif
 
 all:  $(CLI_OBJ) cli
 
