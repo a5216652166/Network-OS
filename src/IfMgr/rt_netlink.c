@@ -60,9 +60,10 @@ static const struct message nlmsg_str[] = {
   {0, NULL}
 };
 
-struct zebra_t zebrad;
+struct zebra_t ifmgr_zd;
 unsigned long zebra_debug_kernel;
 
+extern struct zebra_privs_t ifMgrd_privs;
 /* ifMgrd privileges */
 static zebra_capabilities_t _caps_p [] =
 {
@@ -70,21 +71,6 @@ static zebra_capabilities_t _caps_p [] =
   ZCAP_BIND
 };
 
-
-/* zebra privileges to run with */
-struct zebra_privs_t zserv_privs =
-{
-#if defined(QUAGGA_USER) && defined(QUAGGA_GROUP)
-  .user = QUAGGA_USER,
-  .group = QUAGGA_GROUP,
-#endif
-#ifdef VTY_GROUP
-  .vty_group = VTY_GROUP,
-#endif
-  .caps_p = _caps_p,
-  .cap_num_p = array_size(_caps_p),
-  .cap_num_i = 0
-};
 
 u_int32_t nl_rcvbufsize;
 
@@ -177,7 +163,7 @@ netlink_socket (struct nlsock *nl, unsigned long groups)
   snl.nl_groups = groups;
 
   /* Bind the socket to the netlink structure for anything. */
-  if (zserv_privs.change (ZPRIVS_RAISE))
+  if (ifMgrd_privs.change (ZPRIVS_RAISE))
     {
       zlog (NULL, LOG_ERR, "Can't raise privileges");
       return -1;
@@ -185,7 +171,7 @@ netlink_socket (struct nlsock *nl, unsigned long groups)
 
   ret = bind (sock, (struct sockaddr *) &snl, sizeof snl);
   save_errno = errno;
-  if (zserv_privs.change (ZPRIVS_LOWER))
+  if (ifMgrd_privs.change (ZPRIVS_LOWER))
     zlog (NULL, LOG_ERR, "Can't lower privileges");
 
   if (ret < 0)
@@ -248,7 +234,7 @@ netlink_request (int family, int type, struct nlsock *nl)
   /* linux appears to check capabilities on every message 
    * have to raise caps for every message sent
    */
-  if (zserv_privs.change (ZPRIVS_RAISE))
+  if (ifMgrd_privs.change (ZPRIVS_RAISE))
     {
       zlog (NULL, LOG_ERR, "Can't raise privileges");
       return -1;
@@ -258,7 +244,7 @@ netlink_request (int family, int type, struct nlsock *nl)
                 (struct sockaddr *) &snl, sizeof snl);
   save_errno = errno;
 
-  if (zserv_privs.change (ZPRIVS_LOWER))
+  if (ifMgrd_privs.change (ZPRIVS_LOWER))
     zlog (NULL, LOG_ERR, "Can't lower privileges");
 
   if (ret < 0)
@@ -691,11 +677,11 @@ netlink_talk (struct nlmsghdr *n, struct nlsock *nl)
                n->nlmsg_seq);
 
   /* Send message to netlink interface. */
-  if (zserv_privs.change (ZPRIVS_RAISE))
+  if (ifMgrd_privs.change (ZPRIVS_RAISE))
     zlog (NULL, LOG_ERR, "Can't raise privileges");
   status = sendmsg (nl->sock, &msg, 0);
   save_errno = errno;
-  if (zserv_privs.change (ZPRIVS_LOWER))
+  if (ifMgrd_privs.change (ZPRIVS_LOWER))
     zlog (NULL, LOG_ERR, "Can't lower privileges");
 
   if (status < 0)
@@ -719,7 +705,7 @@ static int
 kernel_read (struct thread *thread)
 {
   netlink_parse_info (netlink_information_fetch, &netlink);
-  thread_add_read (zebrad.master, kernel_read, NULL, netlink.sock);
+  thread_add_read (master, kernel_read, NULL, netlink.sock);
 
   return 0;
 }
@@ -779,7 +765,7 @@ kernel_init (void)
 	netlink_recvbuf (&netlink, nl_rcvbufsize);
 
       netlink_install_filter (netlink.sock, netlink_cmd.snl.nl_pid);
-      thread_add_read (zebrad.master, kernel_read, NULL, netlink.sock);
+      thread_add_read (master, kernel_read, NULL, netlink.sock);
     }
 }
 
@@ -872,7 +858,7 @@ zebra_interface_up_update (struct interface *ifp)
   if (IS_ZEBRA_DEBUG_EVENT)
     zlog_debug ("MESSAGE: ZEBRA_INTERFACE_UP %s", ifp->name);
 
-  for (ALL_LIST_ELEMENTS (zebrad.client_list, node, nnode, client))
+  for (ALL_LIST_ELEMENTS (ifmgr_zd.client_list, node, nnode, client))
     zsend_interface_update (ZEBRA_INTERFACE_UP, client, ifp);
 #endif
 }
@@ -888,7 +874,7 @@ zebra_interface_down_update (struct interface *ifp)
   if (IS_ZEBRA_DEBUG_EVENT)
     zlog_debug ("MESSAGE: ZEBRA_INTERFACE_DOWN %s", ifp->name);
 
-  for (ALL_LIST_ELEMENTS (zebrad.client_list, node, nnode, client))
+  for (ALL_LIST_ELEMENTS (ifmgr_zd.client_list, node, nnode, client))
     zsend_interface_update (ZEBRA_INTERFACE_DOWN, client, ifp);
 #endif
 }
@@ -903,7 +889,7 @@ zebra_interface_add_update (struct interface *ifp)
   if (IS_ZEBRA_DEBUG_EVENT)
     zlog_debug ("MESSAGE: ZEBRA_INTERFACE_ADD %s", ifp->name);
     
-  for (ALL_LIST_ELEMENTS (zebrad.client_list, node, nnode, client))
+  for (ALL_LIST_ELEMENTS (ifmgr_zd.client_list, node, nnode, client))
     if (client->ifinfo)
       zsend_interface_add (client, ifp);
 #endif
@@ -919,7 +905,7 @@ zebra_interface_delete_update (struct interface *ifp)
   if (IS_ZEBRA_DEBUG_EVENT)
     zlog_debug ("MESSAGE: ZEBRA_INTERFACE_DELETE %s", ifp->name);
 
-  for (ALL_LIST_ELEMENTS (zebrad.client_list, node, nnode, client))
+  for (ALL_LIST_ELEMENTS (ifmgr_zd.client_list, node, nnode, client))
     if (client->ifinfo)
       zsend_interface_delete (client, ifp);
 #endif
