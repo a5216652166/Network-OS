@@ -14,6 +14,7 @@
 #include "filter.h"
 #include "sockopt.h"
 #include "privs.h"
+#include "vtysh.h"
 
 #include "zebra/connected.h"
 
@@ -263,11 +264,9 @@ void
 ifMgr_if_init (void)
 {
   /* Default initial size of interface vector. */
-  if_init();
   if_add_hook (IF_NEW_HOOK, ifMgr_interface_new_hook);
   if_add_hook (IF_DELETE_HOOK, ifMgr_interface_delete_hook);
   
-#if 0
   /* Install interface node. */
   install_node (&interface_node, ifMgr_interface_config_write);
 
@@ -277,5 +276,5 @@ ifMgr_if_init (void)
   install_default (INTERFACE_NODE);
   install_element (INTERFACE_NODE, &interface_desc_cmd);
   install_element (INTERFACE_NODE, &no_interface_desc_cmd);
-#endif
+  install_element (INTERFACE_NODE, &ospf_cost_u32_inet4_cmd_vtysh);
 }
