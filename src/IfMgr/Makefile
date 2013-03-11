@@ -25,6 +25,7 @@ $(IFMGR_OBJ) : %.o : %.c Makefile
 ifMgrd: $(IFMGRS_OBJ)
 	$(CC) $(LD_FLAGS) -o ifMgrd $(IFMGR_OBJ) $(IFMGR_LIBS) -lcap -lrt -lcrypt
 	mkdir -p  ${TOPDIR}/final/opt/NetworkOS/sbin/
-	install -m755 ifMgrd ${TOPDIR}/final/opt/NetworkOS/sbin/	
+	cp ifMgrd ${TOPDIR}/final/opt/NetworkOS/sbin/
+	#install -m755 ifMgrd ${TOPDIR}/final/opt/NetworkOS/sbin/	
 clean:
 	rm -f $(IFMGRS_SRCC_DIR)/*.o ifMgrd
