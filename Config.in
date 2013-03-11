@@ -63,8 +63,8 @@ config LAYER3
 if LAYER3
 
 config BGP
-	bool "Enables BGP Support"
-	default y
+	bool "Enables BGP Support - Experimental"
+	default n
 	help
 	  Enables BGP Support
 
@@ -75,10 +75,22 @@ config OSPF
 	  Enables OSPF Support
 
 config RIP
-	bool "Enables RIP Support"
-	default y
+	bool "Enables RIP Support - Experimental"
+	default n
 	help
 	  Enables RIP Support
+
+config  ISISD
+        bool "Enables ISISD Support - Experimental"
+        default n
+        help
+          Enables ISISD Support
+
+config  BABELD
+        bool "Enables BABELD Support - Experimental"
+        default n
+        help
+          Enables BABELD Support
 endif
 
 

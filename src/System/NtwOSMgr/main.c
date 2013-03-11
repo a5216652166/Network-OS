@@ -2,25 +2,36 @@
 #include "signal.h"
 
 struct process_info {
-	char             *name;
-	char             *binaryname;
-	char             *arg[4];
+	const char             *name;
+	const char             *binaryname;
+	const char             *arg[4];
 	clock_t          start_time;
 	int              pid;
 	
 } process[] = {
-
 	{"IFMGR", "/opt/NetworkOS/sbin/ifMgrd", "ifMgrd", "-u", "root", NULL, 0, 0},
 #ifdef CONFIG_STP
 	{"STP", "/opt/NetworkOS/sbin/stpd", "stp", "-u", "root", NULL, 0, 0},
 #endif
 #ifdef CONFIG_LAYER3
 	{"RTM", "/opt/NetworkOS/sbin/zebra", "zebra", "-u", "root", NULL, 0, 0},
+#ifdef CONFIG_BGP
 	{"BGP", "/opt/NetworkOS/sbin/bgpd",  "bgpd",  "-u", "root", NULL, 0, 0},
+#endif
+#ifdef CONFIG_OSPF
 	{"OSPF", "/opt/NetworkOS/sbin/ospfd","ospfd", "-u", "root", NULL, 0, 0},
 	{"OSPF6D", "/opt/NetworkOS/sbin/ospf6d", "ospfd6d", "-u", "root", NULL, 0, 0},
+#endif
+#ifdef CONFIG_RIP
 	{"RIP", "/opt/NetworkOS/sbin/ripd", "ripd", "-u", "root", NULL, 0, 0},
 	{"RIPNGD", "/opt/NetworkOS/sbin/ripngd", "ripngd", "-u", "root", NULL, 0, 0},
+#endif
+#ifdef CONFIG_ISISD
+	{"ISISD", "/opt/NetworkOS/sbin/isisd", "isisd", "-u", "root", NULL, 0, 0},
+#endif
+#ifdef CONFIG_BABELD
+	{"BABELD", "/opt/NetworkOS/sbin/babeld", "babeld", "-u", "root", NULL, 0, 0},
+#endif
 #endif
 	{NULL,  NULL,       NULL, NULL, NULL, NULL}
 }; 
