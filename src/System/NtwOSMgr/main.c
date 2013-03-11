@@ -1,14 +1,6 @@
-#include "common_types.h"
-#include "signal.h"
+#include "main.h"
 
-struct process_info {
-	const char             *name;
-	const char             *binaryname;
-	const char             *arg[4];
-	clock_t                start_time;
-	int                    pid;
-	
-} process[] = {
+struct process_info process[] = {
 	{"IFMGR", "/opt/NetworkOS/sbin/ifMgrd", "ifMgrd", "-u", "root", NULL, 0, 0},
 #ifdef CONFIG_STP
 	{"STP", "/opt/NetworkOS/sbin/stpd", "stp", "-u", "root", NULL, 0, 0},
@@ -33,7 +25,6 @@ struct process_info {
 	{"BABELD", "/opt/NetworkOS/sbin/babeld", "babeld", "-u", "root", NULL, 0, 0},
 #endif
 #endif
-	{NULL,  NULL,       NULL, NULL, NULL, NULL}
 }; 
 
 void terminate_all_process (int signo)
@@ -86,6 +77,15 @@ void start_process (void)
 	}
 }
 
+void do_process_monitor (void)
+{
+	int i = 0;
+	while (i < sizeof (process) / sizeof (process[0])) {
+		track_and_update_cpu_usage (i);
+		i++;
+	}
+}
+
 int main (int argc, char **argv)
 {
 	int i = 0;
@@ -103,7 +103,7 @@ int main (int argc, char **argv)
 		system ("echo 1>  /opt/NetworkOS/NwtMgrDone");
 
 	while (1) {
-		//do_process_monitor ();
+		do_process_monitor ();
 		sleep (1);
 	}
 }
