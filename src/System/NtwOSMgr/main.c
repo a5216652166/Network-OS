@@ -5,8 +5,8 @@ struct process_info {
 	const char             *name;
 	const char             *binaryname;
 	const char             *arg[4];
-	clock_t          start_time;
-	int              pid;
+	clock_t                start_time;
+	int                    pid;
 	
 } process[] = {
 	{"IFMGR", "/opt/NetworkOS/sbin/ifMgrd", "ifMgrd", "-u", "root", NULL, 0, 0},
@@ -51,17 +51,20 @@ void terminate_all_process (int signo)
 	exit (0);
 }
 
-int main (int argc, char **argv)
+void init_signals (void)
 {
-	int i = 0;
-	int pid = 0;
-	
 	signal (SIGTERM, terminate_all_process);
+}
+
+void start_process (void) 
+{
+	int i = 0, pid = 0;
+
+	unlink ("/opt/NetworkOS/NwtMgrDone");
 
 	while (i < sizeof (process) / sizeof (process[0])) {
 		if (process[i].name && process[i].binaryname) {
 			pid = fork ();
-
 			switch (pid) {
 				case -1:
 					fprintf (stderr, "Error: \"%s\"  process creation failed\n", 
@@ -69,6 +72,7 @@ int main (int argc, char **argv)
 					break;
 				case 0:
 					setsid();
+					printf ("-> Starting process \033[31m%s\033[0m\n", process[i].name);
 					execvp(process[i].binaryname, process[i].arg);
 					break;
 				default:
@@ -80,10 +84,26 @@ int main (int argc, char **argv)
 		}
 		i++;
 	}
-		
+}
+
+int main (int argc, char **argv)
+{
+	int i = 0;
+	int pid = 0;
+	
+	init_signals ();
+
+        start_process ();
+
 	sleep (1);
-	system ("echo 1>  /opt/NetworkOS/NwtMgrDone");
+
+	printf ("-> All process started successfully\n");
+
+	if (creat("/opt/NetworkOS/NwtMgrDone", S_IRWXU) < 0)
+		system ("echo 1>  /opt/NetworkOS/NwtMgrDone");
+
 	while (1) {
+		//do_process_monitor ();
 		sleep (1);
 	}
 }
