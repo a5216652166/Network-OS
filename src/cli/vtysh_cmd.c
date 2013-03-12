@@ -4772,7 +4772,7 @@ DEFSH (VTYSH_BGPD, clear_bgp_peer_cmd_vtysh,
        "BGP neighbor address to clear\n"
        "BGP IPv6 neighbor to clear\n")
 
-DEFSH (VTYSH_ZEBRA, show_interface_desc_cmd_vtysh, 
+DEFSH (VTYSH_IFMGR, show_interface_desc_cmd_vtysh, 
        "show interface description", 
        "Show running system information\n"
        "Interface status and configuration\n"
@@ -7109,7 +7109,7 @@ DEFSH (VTYSH_RIPD, rip_redistribute_type_metric_cmd_vtysh,
        "Metric\n"
        "Metric value\n")
 
-DEFSH (VTYSH_ZEBRA, no_shutdown_if_cmd_vtysh, 
+DEFSH (VTYSH_IFMGR, no_shutdown_if_cmd_vtysh, 
        "no shutdown", 
        "Negate a command or set its defaults\n"
        "Shutdown the selected interface\n")
@@ -9475,7 +9475,7 @@ DEFSH (VTYSH_BGPD, bgp_network_mask_natural_route_map_cmd_vtysh,
        "Route-map to modify the attributes\n"
        "Name of the route map\n")
 
-DEFSH (VTYSH_ZEBRA, show_interface_cmd_vtysh, 
+DEFSH (VTYSH_IFMGR, show_interface_cmd_vtysh, 
        "show interface [IFNAME]", 
        "Show running system information\n"
        "Interface status and configuration\n"
@@ -9952,7 +9952,7 @@ DEFSH (VTYSH_OSPFD|VTYSH_OSPF6D|VTYSH_RIPD|VTYSH_RIPNGD|VTYSH_ZEBRA, no_match_in
        "Match values from routing table\n"
        "Match first hop interface of route\n")
 
-DEFSH (VTYSH_ZEBRA, bandwidth_if_cmd_vtysh, 
+DEFSH (VTYSH_IFMGR, bandwidth_if_cmd_vtysh, 
        "bandwidth <1-10000000>", 
        "Set bandwidth informational parameter\n"
        "Bandwidth in kilobits\n")
@@ -12011,7 +12011,7 @@ DEFSH (VTYSH_BGPD, show_bgp_instance_ipv6_safi_summary_cmd_vtysh,
        "Address Family modifier\n"
        "Summary of BGP neighbor status\n")
 
-DEFSH (VTYSH_ZEBRA, no_bandwidth_if_cmd_vtysh, 
+DEFSH (VTYSH_IFMGR, no_bandwidth_if_cmd_vtysh, 
        "no bandwidth", 
        "Negate a command or set its defaults\n"
        "Set bandwidth informational parameter\n")
@@ -14773,7 +14773,7 @@ DEFSH (VTYSH_BGPD, show_bgp_view_neighbor_damp_cmd_vtysh,
        "Neighbor to display information about\n"
        "Display the dampened routes received from neighbor\n")
 
-DEFSH (VTYSH_ZEBRA, shutdown_if_cmd_vtysh, 
+DEFSH (VTYSH_IFMGR, shutdown_if_cmd_vtysh, 
        "shutdown", 
        "Shutdown the selected interface\n")
 
