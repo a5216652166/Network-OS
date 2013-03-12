@@ -23,8 +23,7 @@
 #include <zebra.h>
 #include <fcntl.h>
 #include <log.h>
-#include "version.h"
-
+pid_t pid_output (const char *);
 #define PIDFILE_MASK 0644
 #ifndef HAVE_FCNTL
 

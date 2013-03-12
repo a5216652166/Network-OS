@@ -243,5 +243,4 @@ extern void vty_hello (struct vty *);
 /* Send a fixed-size message to all vty terminal monitors; this should be
    an async-signal-safe function. */
 extern void vty_log_fixed (const char *buf, size_t len);
-
 #endif /* _ZEBRA_VTY_H */
