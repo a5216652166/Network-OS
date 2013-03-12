@@ -22,7 +22,6 @@
 #ifndef _ZEBRA_ZSERV_H
 #define _ZEBRA_ZSERV_H
 
-#include "rib.h"
 #include "if.h"
 #include "workqueue.h"
 
@@ -30,10 +29,10 @@
 #define ZEBRA_VTY_PORT                2601
 
 /* Default configuration filename. */
-#define DEFAULT_CONFIG_FILE "zebra.conf"
+#define DEFAULT_CONFIG_FILE "server.conf"
 
 /* Client structure. */
-struct zserv
+struct nserv
 {
   /* Client file descriptor. */
   int sock;
@@ -51,32 +50,14 @@ struct zserv
 
   /* Thread for delayed close. */
   struct thread *t_suicide;
-
-  /* default routing table this client munges */
-  int rtm_table;
-
-  /* This client's redistribute flag. */
-  u_char redist[ZEBRA_ROUTE_MAX];
-
-  /* Redistribute default route flag. */
-  u_char redist_default;
-
-  /* Interface information. */
-  u_char ifinfo;
-
-  /* Router-id information. */
-  u_char ridinfo;
 };
 
 /* Zebra instance */
-struct zebra_t
+struct server_t
 {
   /* Thread master */
   struct thread_master *master;
   struct list *client_list;
-
-  /* default table */
-  int rtm_table_default;
 
   /* rib work queue */
   struct work_queue *ribq;
@@ -87,26 +68,26 @@ struct zebra_t
 #define PSIZE(a) (((a) + 7) / (8))
 
 /* Prototypes. */
-extern void zebra_init (void);
-extern void zebra_if_init (void);
-extern void zebra_zserv_socket_init (char *path);
+extern void server_init (void);
+extern void server_if_init (void);
+extern void server_nserv_socket_init (char *path);
 extern void hostinfo_get (void);
 extern void rib_init (void);
 extern void interface_list (void);
 extern void kernel_init (void);
 extern void route_read (void);
-extern void zebra_route_map_init (void);
-extern void zebra_snmp_init (void);
-extern void zebra_vty_init (void);
+extern void server_route_map_init (void);
+extern void server_snmp_init (void);
+extern void server_vty_init (void);
 
-extern int zsend_interface_add (struct zserv *, struct interface *);
-extern int zsend_interface_delete (struct zserv *, struct interface *);
-extern int zsend_interface_address (int, struct zserv *, struct interface *,
+extern int zsend_interface_add (struct nserv *, struct interface *);
+extern int zsend_interface_delete (struct nserv *, struct interface *);
+extern int zsend_interface_address (int, struct nserv *, struct interface *,
                                     struct connected *);
-extern int zsend_interface_update (int, struct zserv *, struct interface *);
-extern int zsend_route_multipath (int, struct zserv *, struct prefix *, 
+extern int zsend_interface_update (int, struct nserv *, struct interface *);
+extern int zsend_route_multipath (int, struct nserv *, struct prefix *, 
                                   struct rib *);
-extern int zsend_router_id_update(struct zserv *, struct prefix *);
+extern int zsend_router_id_update(struct nserv *, struct prefix *);
 
 extern pid_t pid;
 

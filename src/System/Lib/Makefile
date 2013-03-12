@@ -1,6 +1,6 @@
 include ${TOPDIR}/.config
 
-all: LIB1 LIB2 LIB3 LIB4 LIB5 LIB6
+all: LIB1 LIB2 LIB3 LIB4 LIB5 LIB6 LIB7
 
 LIB_TOP_DIR=${TOPDIR}/src/System/Lib
 
@@ -55,12 +55,16 @@ LIB6_src+=${LIB_TOP_DIR}/qlib/workqueue.c
 LIB6_src+=${LIB_TOP_DIR}/qlib/zclient.c
 
 
+LIB7_src+=${LIB_TOP_DIR}/zserv/zserv.c
+
+
 LIB1_OBJ = $(LIB1_src:.c=.o)
 LIB2_OBJ = $(LIB2_src:.c=.o)
 LIB3_OBJ = $(LIB3_src:.c=.o)
 LIB4_OBJ = $(LIB4_src:.c=.o)
 LIB5_OBJ = $(LIB5_src:.c=.o)
 LIB6_OBJ = $(LIB6_src:.c=.o)
+LIB7_OBJ = $(LIB7_src:.c=.o)
 
 LIB1: $(LIB1_OBJ)
 	$(AR) -crs libhash.a $(LIB1_OBJ)
@@ -79,6 +83,9 @@ LIB5: $(LIB5_OBJ)
 
 LIB6: $(LIB6_OBJ)
 	$(AR) -crs libqlib.a $(LIB6_OBJ)
+
+LIB7: $(LIB7_OBJ)
+	$(AR) -crs libserver.a $(LIB7_OBJ)
 
 CFLAGS += -I${TOPDIR}/src/Layer-3/quagga-0.99.22 -I${TOPDIR}/src/System/Lib/qlib/
 CFLAGS += -include ${TOPDIR}/src/Layer-3/quagga-0.99.22/config.h
