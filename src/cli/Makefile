@@ -22,12 +22,12 @@ CLIS_SRCS += $(CLIS_SRCC_DIR)/linuxstp.c
 CFLAGS += -I${TOPDIR}/src/Layer-2/stp/ -I$(CLIS_SRCC_DIR)/brlib/
 endif
 
-CFLAGS += -I$(CLIS_INC_DIR) -I../Layer-3/quagga-0.99.22 -I../Layer-3/quagga-0.99.22/lib
+CFLAGS += -I$(CLIS_INC_DIR) -I../Layer-3/quagga-0.99.22 -I${TOPDIR}/src/System/Lib/qlib/
 CFLAGS +=  -DSYSCONFDIR=\"/opt/NetworkOS/etc/\" -include ${TOPDIR}/src/Layer-3/quagga-0.99.22/config.h
 
 CLI_OBJ = $(CLIS_SRCS:.c=.o)
 
-CLI_LIBS =  $(TOPDIR)/src/Layer-3/quagga-0.99.22/lib/.libs/libzebra.a 
+CLI_LIBS =  $(TOPDIR)/src/System/Lib/libqlib.a
 ifdef CONFIG_RIP
 CLI_LIBS += $(TOPDIR)/src/Layer-3/quagga-0.99.22/ripngd/libripng.a  \
             $(TOPDIR)/src/Layer-3/quagga-0.99.22/ripd/librip.a 

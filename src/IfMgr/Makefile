@@ -13,9 +13,9 @@ IFMGRS_SRCS += $(IFMGRS_SRCC_DIR)/rt_netlink.c
 
 IFMGR_OBJ = $(IFMGRS_SRCS:.c=.o)
 
-CFLAGS +=   -I../Layer-3/quagga-0.99.22 -I../Layer-3/quagga-0.99.22/lib -DHAVE_INET_NTOP -DHAVE_SOCKLEN_T -DSYSCONFDIR=/opt/NetworkOS/etc -DHAVE_NETLINK
+CFLAGS +=   -I../Layer-3/quagga-0.99.22  -I${TOPDIR}/src/System/Lib/qlib/  -DHAVE_INET_NTOP -DHAVE_SOCKLEN_T -DSYSCONFDIR=/opt/NetworkOS/etc -DHAVE_NETLINK
 
-IFMGR_LIBS = $(TOPDIR)//src/Layer-3/quagga-0.99.22/lib/.libs/libzebra.a
+IFMGR_LIBS = $(TOPDIR)/src/System/Lib/libqlib.a
 
 all:  $(IFMGR_OBJ) ifMgrd
 
