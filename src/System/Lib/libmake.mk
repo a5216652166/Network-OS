@@ -1,7 +1,7 @@
 #Simple rule
 
 $(LIB%_OBJ) : %.o : %.c
-	$(CC) -c $(CFLAGS) $< -o $@
+	$(CC) -c   -fPIC $(CFLAGS) $< -o $@
 
 #LIB%: $(LIB%_OBJ)
 #	$(AR) -crs $SLIB% $(LIB%_OBJ)
