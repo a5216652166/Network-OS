@@ -27,7 +27,7 @@ CFLAGS +=  -DSYSCONFDIR=\"/opt/NetworkOS/etc/\" -include ${TOPDIR}/src/Layer-3/q
 
 CLI_OBJ = $(CLIS_SRCS:.c=.o)
 
-CLI_LIBS =  $(TOPDIR)/src/System/Lib/libqlib.a
+CLI_LIBS =  $(TOPDIR)/src/.libs/libqlib.a
 ifdef CONFIG_RIP
 CLI_LIBS += $(TOPDIR)/src/Layer-3/quagga-0.99.22/ripngd/libripng.a  \
             $(TOPDIR)/src/Layer-3/quagga-0.99.22/ripd/librip.a 
