@@ -45,7 +45,7 @@ noinst_HEADERS = \
 	interface.h ipforward.h irdp.h router-id.h kernel_socket.h \
 	rt_netlink.h zebra_fpm.h zebra_fpm_private.h
 
-zebra_LDADD = $(otherobj) ../lib/libzebra.la $(LIBCAP) $(LIB_IPV6)
+zebra_LDADD = $(otherobj) ../lib/libzebra.la $(LIBCAP) $(LIB_IPV6) ${TOPDIR}/src/.libs/libifmgr.a  ${TOPDIR}/src/.libs/libclient.a
 
 testzebra_LDADD = ../lib/libzebra.la $(LIBCAP) $(LIB_IPV6)
 

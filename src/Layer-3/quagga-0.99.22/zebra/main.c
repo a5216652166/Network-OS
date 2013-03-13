@@ -115,6 +115,9 @@ char config_default[] = SYSCONFDIR DEFAULT_CONFIG_FILE;
 /* Process ID saved for use by init system */
 const char *pid_file = PATH_ZEBRA_PID;
 
+
+struct thread_master *master = NULL;
+
 /* Help information display. */
 static void
 usage (char *progname, int status)
@@ -182,6 +185,10 @@ static void
 sigusr1 (void)
 {
   zlog_rotate (NULL);
+}
+void ifmgr_event_callback_handler ()
+{
+	printf ("Event handler called from RTM process\n");
 }
 
 struct quagga_signal_t zebra_signals[] =
@@ -403,6 +410,9 @@ main (int argc, char **argv)
   /* This must be done only after locking pidfile (bug #403). */
   zebra_zserv_socket_init (zserv_path);
 
+  void ifmgr_client_init (void);
+  master = zebrad.master;
+  ifmgr_client_init ();
   /* Make vty server socket. */
   vty_serv_sock (vty_addr, vty_port, ZEBRA_VTYSH_PATH);
 
