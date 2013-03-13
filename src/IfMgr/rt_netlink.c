@@ -33,12 +33,15 @@
 #include "memory.h"
 #include "thread.h"
 #include "privs.h"
+#include "libserv.h"
 
-#include "zebra/zserv.h"
-#include "zebra/rt.h"
-#include "zebra/redistribute.h"
-#include "zebra/interface.h"
-#include "zebra/debug.h"
+//#include "zebra/zserv.h"
+//#include "zebra/rt.h"
+//#include "zebra/redistribute.h"
+//#include "zebra/interface.h"
+//#include "zebra/debug.h"
+
+#define IS_ZEBRA_DEBUG_KERNEL 0
 
 #include "rt_netlink.h"
 
@@ -59,8 +62,7 @@ static const struct message nlmsg_str[] = {
   {RTM_GETLINK,  "RTM_GETLINK"},
   {0, NULL}
 };
-
-struct zebra_t ifmgr_zd;
+struct server_t ifmgr_zd;
 unsigned long zebra_debug_kernel;
 
 extern struct zebra_privs_t ifMgrd_privs;
