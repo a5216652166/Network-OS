@@ -1,5 +1,7 @@
 include ${TOPDIR}/.config
 
+LIB_OUTPUT=${TOPDIR}/src/.libs/
+
 all: LIB1 LIB2 LIB3 LIB4 LIB5 LIB6 LIB7
 
 LIB_TOP_DIR=${TOPDIR}/src/System/Lib
@@ -67,27 +69,27 @@ LIB6_OBJ = $(LIB6_src:.c=.o)
 LIB7_OBJ = $(LIB7_src:.c=.o)
 
 LIB1: $(LIB1_OBJ)
-	$(AR) -crs libhash.a $(LIB1_OBJ)
+	$(AR) -crs $(LIB_OUTPUT)/libhash.a $(LIB1_OBJ)
 
 LIB2: $(LIB2_OBJ)
-	$(AR) -crs libmempool.a $(LIB2_OBJ)
+	$(AR) -crs $(LIB_OUTPUT)/libmempool.a $(LIB2_OBJ)
 
 LIB3: $(LIB3_OBJ)
-	$(AR) -crs libtask.a $(LIB3_OBJ)
+	$(AR) -crs $(LIB_OUTPUT)/libtask.a $(LIB3_OBJ)
 
 LIB4: $(LIB4_OBJ)
-	$(AR) -crs libtimers.a $(LIB4_OBJ)
+	$(AR) -crs $(LIB_OUTPUT)/libtimers.a $(LIB4_OBJ)
 
 LIB5: $(LIB5_OBJ)
-	$(AR) -crs libclient.a $(LIB5_OBJ)
+	$(AR) -crs $(LIB_OUTPUT)/libclient.a $(LIB5_OBJ)
 
 LIB6: $(LIB6_OBJ)
-	$(AR) -crs libqlib.a $(LIB6_OBJ)
+	$(AR) -crs $(LIB_OUTPUT)/libqlib.a $(LIB6_OBJ)
 
 LIB7: $(LIB7_OBJ)
-	$(AR) -crs libserver.a $(LIB7_OBJ)
+	$(AR) -crs $(LIB_OUTPUT)/libserver.a $(LIB7_OBJ)
 
-CFLAGS += -I${TOPDIR}/src/Layer-3/quagga-0.99.22 -I${TOPDIR}/src/System/Lib/qlib/
+CFLAGS +=  -I${TOPDIR}/src/System/Lib/qlib/ -fPIC
 CFLAGS += -include ${TOPDIR}/src/Layer-3/quagga-0.99.22/config.h
 
 include libmake.mk
