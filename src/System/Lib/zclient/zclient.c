@@ -29,7 +29,7 @@
 #include "if.h"
 #include "log.h"
 #include "thread.h"
-#include "zclient.h"
+#include "libclient.h"
 #include "memory.h"
 #include "table.h"
 
@@ -37,107 +37,109 @@
 enum event {ZCLIENT_SCHEDULE, ZCLIENT_READ, ZCLIENT_CONNECT};
 
 /* Prototype for event manager. */
-static void nclient_event (enum event, struct nclient *);
+static void client_event (enum event, struct client *);
 
 extern struct thread_master *master;
 
-char *nclient_serv_path = NULL;
+extern char *client_serv_path = NULL;
+
+static int client_port = -1;
 
 /* This file local debug flag. */
-int nclient_debug = 0;
+int client_debug = 0;
 
-/* Allocate nclient structure. */
-struct nclient *
-nclient_new ()
+/* Allocate client structure. */
+struct client *
+client_new ()
 {
-  struct nclient *nclient;
-  nclient = XCALLOC (MTYPE_ZCLIENT, sizeof (struct nclient));
+  struct client *client;
+  client = XCALLOC (MTYPE_ZCLIENT, sizeof (struct client));
 
-  nclient->ibuf = stream_new (ZEBRA_MAX_PACKET_SIZ);
-  nclient->obuf = stream_new (ZEBRA_MAX_PACKET_SIZ);
-  nclient->wb = buffer_new(0);
+  client->ibuf = stream_new (ZEBRA_MAX_PACKET_SIZ);
+  client->obuf = stream_new (ZEBRA_MAX_PACKET_SIZ);
+  client->wb = buffer_new(0);
 
-  return nclient;
+  return client;
 }
 
 /* This function is only called when exiting, because
    many parts of the code do not check for I/O errors, so they could
    reference an invalid pointer if the structure was ever freed.
 
-   Free nclient structure. */
+   Free client structure. */
 void
-nclient_free (struct nclient *nclient)
+client_free (struct client *client)
 {
-  if (nclient->ibuf)
-    stream_free(nclient->ibuf);
-  if (nclient->obuf)
-    stream_free(nclient->obuf);
-  if (nclient->wb)
-    buffer_free(nclient->wb);
+  if (client->ibuf)
+    stream_free(client->ibuf);
+  if (client->obuf)
+    stream_free(client->obuf);
+  if (client->wb)
+    buffer_free(client->wb);
 
-  XFREE (MTYPE_ZCLIENT, nclient);
+  XFREE (MTYPE_ZCLIENT, client);
 }
 
 /* Initialize zebra client.  Argument redist_default is unwanted
    redistribute route type. */
 void
-nclient_init (struct nclient *nclient)
+client_init (struct client *client)
 {
   int i;
   
   /* Enable zebra client connection by default. */
-  nclient->enable = 1;
+  client->enable = 1;
 
   /* Set -1 to the default socket value. */
-  nclient->sock = -1;
+  client->sock = -1;
 
-  /* Schedule first nclient connection. */
-  if (nclient_debug)
-    zlog_debug ("nclient start scheduled");
+  /* Schedule first client connection. */
+  if (client_debug)
+    zlog_debug ("client start scheduled");
 
-  nclient_event (ZCLIENT_SCHEDULE, nclient);
+  client_event (ZCLIENT_SCHEDULE, client);
 }
 
 /* Stop zebra client services. */
 void
-nclient_stop (struct nclient *nclient)
+client_stop (struct client *client)
 {
-  if (nclient_debug)
-    zlog_debug ("nclient stopped");
+  if (client_debug)
+    zlog_debug ("client stopped");
 
   /* Stop threads. */
-  THREAD_OFF(nclient->t_read);
-  THREAD_OFF(nclient->t_connect);
-  THREAD_OFF(nclient->t_write);
+  THREAD_OFF(client->t_read);
+  THREAD_OFF(client->t_connect);
+  THREAD_OFF(client->t_write);
 
   /* Reset streams. */
-  stream_reset(nclient->ibuf);
-  stream_reset(nclient->obuf);
+  stream_reset(client->ibuf);
+  stream_reset(client->obuf);
 
   /* Empty the write buffer. */
-  buffer_reset(nclient->wb);
+  buffer_reset(client->wb);
 
   /* Close socket. */
-  if (nclient->sock >= 0)
+  if (client->sock >= 0)
     {
-      close (nclient->sock);
-      nclient->sock = -1;
+      close (client->sock);
+      client->sock = -1;
     }
-  nclient->fail = 0;
+  client->fail = 0;
 }
 
 void
-nclient_reset (struct nclient *nclient)
+client_reset (struct client *client)
 {
-  nclient_stop (nclient);
-  nclient_init (nclient);
+  client_stop (client);
+  client_init (client);
 }
 
-#ifdef HAVE_TCP_ZEBRA
+#if 1
 
 /* Make socket to zebra daemon. Return zebra socket. */
 static int
-nclient_socket(void)
+client_socket(void)
 {
   int sock;
   int ret;
@@ -151,7 +153,7 @@ nclient_socket(void)
   /* Make server socket. */ 
   memset (&serv, 0, sizeof (struct sockaddr_in));
   serv.sin_family = AF_INET;
-  serv.sin_port = htons (ZEBRA_PORT);
+  serv.sin_port = htons (client_port);
 #ifdef HAVE_STRUCT_SOCKADDR_IN_SIN_LEN
   serv.sin_len = sizeof (struct sockaddr_in);
 #endif /* HAVE_STRUCT_SOCKADDR_IN_SIN_LEN */
@@ -173,7 +175,7 @@ nclient_socket(void)
 #include <sys/un.h>
 
 static int
-nclient_socket_un (const char *path)
+client_socket_un (const char *path)
 {
   int ret;
   int sock, len;
@@ -206,49 +208,45 @@ nclient_socket_un (const char *path)
 
 /**
  * Connect to zebra daemon.
- * @param nclient a pointer to nclient structure
+ * @param client a pointer to client structure
  * @return socket fd just to make sure that connection established
- * @see nclient_init
- * @see nclient_new
+ * @see client_init
+ * @see client_new
  */
 int
-nclient_socket_connect (struct nclient *nclient)
+client_socket_connect (struct client *client)
 {
-#ifdef HAVE_TCP_ZEBRA
-  nclient->sock = nclient_socket ();
-#else
-  nclient->sock = nclient_socket_un (nclient_serv_path ? nclient_serv_path : ZEBRA_SERV_PATH);
-#endif
-  return nclient->sock;
+  client->sock = client_socket ();
+  return client->sock;
 }
 
 static int
-nclient_failed(struct nclient *nclient)
+client_failed(struct client *client)
 {
-  nclient->fail++;
-  nclient_stop(nclient);
-  nclient_event(ZCLIENT_CONNECT, nclient);
+  client->fail++;
+  client_stop(client);
+  client_event(ZCLIENT_CONNECT, client);
   return -1;
 }
 
 static int
-nclient_flush_data(struct thread *thread)
+client_flush_data(struct thread *thread)
 {
-  struct nclient *nclient = THREAD_ARG(thread);
+  struct client *client = THREAD_ARG(thread);
 
-  nclient->t_write = NULL;
-  if (nclient->sock < 0)
+  client->t_write = NULL;
+  if (client->sock < 0)
     return -1;
-  switch (buffer_flush_available(nclient->wb, nclient->sock))
+  switch (buffer_flush_available(client->wb, client->sock))
     {
     case BUFFER_ERROR:
-      zlog_warn("%s: buffer_flush_available failed on nclient fd %d, closing",
-      		__func__, nclient->sock);
-      return nclient_failed(nclient);
+      zlog_warn("%s: buffer_flush_available failed on client fd %d, closing",
+      		__func__, client->sock);
+      return client_failed(client);
       break;
     case BUFFER_PENDING:
-      nclient->t_write = thread_add_write(master, nclient_flush_data,
-					  nclient, nclient->sock);
+      client->t_write = thread_add_write(master, client_flush_data,
+					  client, client->sock);
       break;
     case BUFFER_EMPTY:
       break;
@@ -257,31 +255,31 @@ nclient_flush_data(struct thread *thread)
 }
 
 int
-nclient_send_message(struct nclient *nclient)
+client_send_message(struct client *client)
 {
-  if (nclient->sock < 0)
+  if (client->sock < 0)
     return -1;
-  switch (buffer_write(nclient->wb, nclient->sock, STREAM_DATA(nclient->obuf),
-		       stream_get_endp(nclient->obuf)))
+  switch (buffer_write(client->wb, client->sock, STREAM_DATA(client->obuf),
+		       stream_get_endp(client->obuf)))
     {
     case BUFFER_ERROR:
-      zlog_warn("%s: buffer_write failed to nclient fd %d, closing",
-      		 __func__, nclient->sock);
-      return nclient_failed(nclient);
+      zlog_warn("%s: buffer_write failed to client fd %d, closing",
+      		 __func__, client->sock);
+      return client_failed(client);
       break;
     case BUFFER_EMPTY:
-      THREAD_OFF(nclient->t_write);
+      THREAD_OFF(client->t_write);
       break;
     case BUFFER_PENDING:
-      THREAD_WRITE_ON(master, nclient->t_write,
-		      nclient_flush_data, nclient, nclient->sock);
+      THREAD_WRITE_ON(master, client->t_write,
+		      client_flush_data, client, client->sock);
       break;
     }
   return 0;
 }
 
 void
-nclient_create_header (struct stream *s, uint16_t command)
+client_create_header (struct stream *s, uint16_t command)
 {
   /* length placeholder, caller can update */
   stream_putw (s, ZEBRA_HEADER_SIZE);
@@ -292,34 +290,34 @@ nclient_create_header (struct stream *s, uint16_t command)
 
 /* Send simple Zebra message. */
 static int
-zebra_message_send (struct nclient *nclient, int command)
+zebra_message_send (struct client *client, int command)
 {
   struct stream *s;
 
-  /* Get nclient output buffer. */
-  s = nclient->obuf;
+  /* Get client output buffer. */
+  s = client->obuf;
   stream_reset (s);
 
   /* Send very simple command only Zebra message. */
-  nclient_create_header (s, command);
+  client_create_header (s, command);
   
-  return nclient_send_message(nclient);
+  return client_send_message(client);
 }
 
 static int
-zebra_hello_send (struct nclient *nclient)
+zebra_hello_send (struct client *client)
 {
 #if 0
   struct stream *s;
-  if (nclient->redist_default)
+  if (client->redist_default)
     {
-      s = nclient->obuf;
+      s = client->obuf;
       stream_reset (s);
 
-      nclient_create_header (s, ZEBRA_HELLO);
-      stream_putc (s, nclient->redist_default);
+      client_create_header (s, ZEBRA_HELLO);
+      stream_putc (s, client->redist_default);
       stream_putw_at (s, 0, stream_get_endp (s));
-      return nclient_send_message(nclient);
+      return client_send_message(client);
     }
 #endif
   return 0;
@@ -327,64 +325,64 @@ zebra_hello_send (struct nclient *nclient)
 
 /* Make connection to zebra daemon. */
 int
-nclient_start (struct nclient *nclient)
+client_start (struct client *client)
 {
   int i;
 
-  if (nclient_debug)
-    zlog_debug ("nclient_start is called");
+  if (client_debug)
+    zlog_debug ("client_start is called");
 
-  /* nclient is disabled. */
-  if (! nclient->enable)
+  /* client is disabled. */
+  if (! client->enable)
     return 0;
 
   /* If already connected to the zebra. */
-  if (nclient->sock >= 0)
+  if (client->sock >= 0)
     return 0;
 
   /* Check connect thread. */
-  if (nclient->t_connect)
+  if (client->t_connect)
     return 0;
 
-  if (nclient_socket_connect(nclient) < 0)
+  if (client_socket_connect(client) < 0)
     {
-      if (nclient_debug)
-	zlog_debug ("nclient connection fail");
-      nclient->fail++;
-      nclient_event (ZCLIENT_CONNECT, nclient);
+      if (client_debug)
+	zlog_debug ("client connection fail");
+      client->fail++;
+      client_event (ZCLIENT_CONNECT, client);
       return -1;
     }
 
-  if (set_nonblocking(nclient->sock) < 0)
-    zlog_warn("%s: set_nonblocking(%d) failed", __func__, nclient->sock);
+  if (set_nonblocking(client->sock) < 0)
+    zlog_warn("%s: set_nonblocking(%d) failed", __func__, client->sock);
 
   /* Clear fail count. */
-  nclient->fail = 0;
-  if (nclient_debug)
-    zlog_debug ("nclient connect success with socket [%d]", nclient->sock);
+  client->fail = 0;
+  if (client_debug)
+    zlog_debug ("client connect success with socket [%d]", client->sock);
       
   /* Create read thread. */
-  nclient_event (ZCLIENT_READ, nclient);
+  client_event (ZCLIENT_READ, client);
 
-  zebra_hello_send (nclient);
+  zebra_hello_send (client);
 
   return 0;
 }
 
-/* This function is a wrapper function for calling nclient_start from
+/* This function is a wrapper function for calling client_start from
    timer or event thread. */
 static int
-nclient_connect (struct thread *t)
+client_connect (struct thread *t)
 {
-  struct nclient *nclient;
+  struct client *client;
 
-  nclient = THREAD_ARG (t);
-  nclient->t_connect = NULL;
+  client = THREAD_ARG (t);
+  client->t_connect = NULL;
 
-  if (nclient_debug)
-    zlog_debug ("nclient_connect is called");
+  if (client_debug)
+    zlog_debug ("client_connect is called");
 
-  return nclient_start (nclient);
+  return client_start (client);
 }
 static int
 memconstant(const void *s, int c, size_t n)
@@ -399,150 +397,151 @@ memconstant(const void *s, int c, size_t n)
 
 /* Zebra client message read function. */
 static int
-nclient_read (struct thread *thread)
+client_read (struct thread *thread)
 {
   size_t already;
   uint16_t length, command;
   uint8_t marker, version;
-  struct nclient *nclient;
+  struct client *client;
 
   /* Get socket to zebra. */
-  nclient = THREAD_ARG (thread);
-  nclient->t_read = NULL;
+  client = THREAD_ARG (thread);
+  client->t_read = NULL;
 
   /* Read zebra header (if we don't have it already). */
-  if ((already = stream_get_endp(nclient->ibuf)) < ZEBRA_HEADER_SIZE)
+  if ((already = stream_get_endp(client->ibuf)) < ZEBRA_HEADER_SIZE)
     {
       ssize_t nbyte;
-      if (((nbyte = stream_read_try(nclient->ibuf, nclient->sock,
+      if (((nbyte = stream_read_try(client->ibuf, client->sock,
 				     ZEBRA_HEADER_SIZE-already)) == 0) ||
 	  (nbyte == -1))
 	{
-	  if (nclient_debug)
-	   zlog_debug ("nclient connection closed socket [%d].", nclient->sock);
-	  return nclient_failed(nclient);
+	  if (client_debug)
+	   zlog_debug ("client connection closed socket [%d].", client->sock);
+	  return client_failed(client);
 	}
       if (nbyte != (ssize_t)(ZEBRA_HEADER_SIZE-already))
 	{
 	  /* Try again later. */
-	  nclient_event (ZCLIENT_READ, nclient);
+	  client_event (ZCLIENT_READ, client);
 	  return 0;
 	}
       already = ZEBRA_HEADER_SIZE;
     }
 
   /* Reset to read from the beginning of the incoming packet. */
-  stream_set_getp(nclient->ibuf, 0);
+  stream_set_getp(client->ibuf, 0);
 
   /* Fetch header values. */
-  length = stream_getw (nclient->ibuf);
-  marker = stream_getc (nclient->ibuf);
-  version = stream_getc (nclient->ibuf);
-  command = stream_getw (nclient->ibuf);
+  length = stream_getw (client->ibuf);
+  marker = stream_getc (client->ibuf);
+  version = stream_getc (client->ibuf);
+  command = stream_getw (client->ibuf);
   
   if (marker != ZEBRA_HEADER_MARKER || version != ZSERV_VERSION)
     {
       zlog_err("%s: socket %d version mismatch, marker %d, version %d",
-               __func__, nclient->sock, marker, version);
-      return nclient_failed(nclient);
+               __func__, client->sock, marker, version);
+      return client_failed(client);
     }
   
   if (length < ZEBRA_HEADER_SIZE) 
     {
       zlog_err("%s: socket %d message length %u is less than %d ",
-	       __func__, nclient->sock, length, ZEBRA_HEADER_SIZE);
-      return nclient_failed(nclient);
+	       __func__, client->sock, length, ZEBRA_HEADER_SIZE);
+      return client_failed(client);
     }
 
   /* Length check. */
-  if (length > STREAM_SIZE(nclient->ibuf))
+  if (length > STREAM_SIZE(client->ibuf))
     {
       struct stream *ns;
       zlog_warn("%s: message size %u exceeds buffer size %lu, expanding...",
-	        __func__, length, (u_long)STREAM_SIZE(nclient->ibuf));
+	        __func__, length, (u_long)STREAM_SIZE(client->ibuf));
       ns = stream_new(length);
-      stream_copy(ns, nclient->ibuf);
-      stream_free (nclient->ibuf);
-      nclient->ibuf = ns;
+      stream_copy(ns, client->ibuf);
+      stream_free (client->ibuf);
+      client->ibuf = ns;
     }
 
   /* Read rest of zebra packet. */
   if (already < length)
     {
       ssize_t nbyte;
-      if (((nbyte = stream_read_try(nclient->ibuf, nclient->sock,
+      if (((nbyte = stream_read_try(client->ibuf, client->sock,
 				     length-already)) == 0) ||
 	  (nbyte == -1))
 	{
-	  if (nclient_debug)
-	    zlog_debug("nclient connection closed socket [%d].", nclient->sock);
-	  return nclient_failed(nclient);
+	  if (client_debug)
+	    zlog_debug("client connection closed socket [%d].", client->sock);
+	  return client_failed(client);
 	}
       if (nbyte != (ssize_t)(length-already))
 	{
 	  /* Try again later. */
-	  nclient_event (ZCLIENT_READ, nclient);
+	  client_event (ZCLIENT_READ, client);
 	  return 0;
 	}
     }
 
   length -= ZEBRA_HEADER_SIZE;
 
-  if (nclient_debug)
-    zlog_debug("nclient 0x%p command 0x%x \n", nclient, command);
+  if (client_debug)
+    zlog_debug("client 0x%p command 0x%x \n", client, command);
 
   switch (command)
     {
     default:
+	client->call_back (command, client, 0);
       break;
     }
 
-  if (nclient->sock < 0)
+  if (client->sock < 0)
     /* Connection was closed during packet processing. */
     return -1;
 
   /* Register read thread. */
-  stream_reset(nclient->ibuf);
-  nclient_event (ZCLIENT_READ, nclient);
+  stream_reset(client->ibuf);
+  client_event (ZCLIENT_READ, client);
 
   return 0;
 }
 
 static void
-nclient_event (enum event event, struct nclient *nclient)
+client_event (enum event event, struct client *client)
 {
   switch (event)
     {
     case ZCLIENT_SCHEDULE:
-      if (! nclient->t_connect)
-	nclient->t_connect =
-	  thread_add_event (master, nclient_connect, nclient, 0);
+      if (! client->t_connect)
+	client->t_connect =
+	  thread_add_event (master, client_connect, client, 0);
       break;
     case ZCLIENT_CONNECT:
-      if (nclient->fail >= 10)
+      if (client->fail >= 10)
 	return;
-      if (nclient_debug)
-	zlog_debug ("nclient connect schedule interval is %d", 
-		   nclient->fail < 3 ? 10 : 60);
-      if (! nclient->t_connect)
-	nclient->t_connect = 
-	  thread_add_timer (master, nclient_connect, nclient,
-			    nclient->fail < 3 ? 10 : 60);
+      if (client_debug)
+	zlog_debug ("client connect schedule interval is %d", 
+		   client->fail < 3 ? 10 : 60);
+      if (! client->t_connect)
+	client->t_connect = 
+	  thread_add_timer (master, client_connect, client,
+			    client->fail < 3 ? 10 : 60);
       break;
     case ZCLIENT_READ:
-      nclient->t_read = 
-	thread_add_read (master, nclient_read, nclient, nclient->sock);
+      client->t_read = 
+	thread_add_read (master, client_read, client, client->sock);
       break;
     }
 }
 
 void
-nclient_serv_path_set (char *path)
+client_serv_path_set (char *path)
 {
   struct stat sb;
 
   /* reset */
-  nclient_serv_path = NULL;
+  client_serv_path = NULL;
 
   /* test if `path' is socket. don't set it otherwise. */
   if (stat(path, &sb) == -1)
@@ -558,6 +557,11 @@ nclient_serv_path_set (char *path)
     }
 
   /* it seems that path is unix socket */
-  nclient_serv_path = path;
+  client_serv_path = path;
 }
 
+void client_set_port (int port)
+{
+	client_port = port;
+	return 0;
+}

@@ -31,28 +31,32 @@
 #include "network.h"
 #include "sockunion.h"
 #include "log.h"
-#include "zclient.h"
+#include "libclient.h"
 #include "privs.h"
 #include "network.h"
 #include "buffer.h"
 
-#include "zserv.h"
+#include "libserv.h"
+
+int server_port = -1;
+
+extern struct thread_master *master;
 
 /* Event list of server. */
 enum event { ZEBRA_SERV, ZEBRA_READ, ZEBRA_WRITE };
 
 struct server_t serverd;
 
-static void server_event (enum event event, int sock, struct nserv *client);
+static void server_event (enum event event, int sock, struct server *client);
 
-extern struct server_privs_t nserv_privs;
+extern struct zebra_privs_t server_privs;
 
-static void server_client_close (struct nserv *client);
+static void server_client_close (struct server *client);
 
 static int
-nserv_delayed_close(struct thread *thread)
+server_delayed_close(struct thread *thread)
 {
-  struct nserv *client = THREAD_ARG(thread);
+  struct server *client = THREAD_ARG(thread);
 
   client->t_suicide = NULL;
   server_client_close(client);
@@ -69,9 +73,9 @@ nserv_delayed_close(struct thread *thread)
 static int route_type_oaths[ZEBRA_ROUTE_MAX];
 
 static int
-nserv_flush_data(struct thread *thread)
+server_flush_data(struct thread *thread)
 {
-  struct nserv *client = THREAD_ARG(thread);
+  struct server *client = THREAD_ARG(thread);
 
   client->t_write = NULL;
   if (client->t_suicide)
@@ -82,12 +86,12 @@ nserv_flush_data(struct thread *thread)
   switch (buffer_flush_available(client->wb, client->sock))
     {
     case BUFFER_ERROR:
-      zlog_warn("%s: buffer_flush_available failed on nserv client fd %d, "
+      zlog_warn("%s: buffer_flush_available failed on server client fd %d, "
       		"closing", __func__, client->sock);
       server_client_close(client);
       break;
     case BUFFER_PENDING:
-      client->t_write = thread_add_write(serverd.master, nserv_flush_data,
+      client->t_write = thread_add_write(master, server_flush_data,
       					 client, client->sock);
       break;
     case BUFFER_EMPTY:
@@ -96,8 +100,8 @@ nserv_flush_data(struct thread *thread)
   return 0;
 }
 
-static int
-server_server_send_message(struct nserv *client)
+int
+server_send_message(struct server *client)
 {
   if (client->t_suicide)
     return -1;
@@ -105,28 +109,28 @@ server_server_send_message(struct nserv *client)
 		       stream_get_endp(client->obuf)))
     {
     case BUFFER_ERROR:
-      zlog_warn("%s: buffer_write failed to nserv client fd %d, closing",
+      zlog_warn("%s: buffer_write failed to server client fd %d, closing",
       		 __func__, client->sock);
       /* Schedule a delayed close since many of the functions that call this
          one do not check the return code.  They do not allow for the
 	 possibility that an I/O error may have caused the client to be
 	 deleted. */
-      client->t_suicide = thread_add_event(serverd.master, nserv_delayed_close,
+      client->t_suicide = thread_add_event(master, server_delayed_close,
 					   client, 0);
       return -1;
     case BUFFER_EMPTY:
       THREAD_OFF(client->t_write);
       break;
     case BUFFER_PENDING:
-      THREAD_WRITE_ON(serverd.master, client->t_write,
-		      nserv_flush_data, client, client->sock);
+      THREAD_WRITE_ON(master, client->t_write,
+		      server_flush_data, client, client->sock);
       break;
     }
   return 0;
 }
 
-static void
-nserv_create_header (struct stream *s, uint16_t cmd)
+void
+server_create_header (struct stream *s, uint16_t cmd)
 {
   /* length placeholder, caller can update */
   stream_putw (s, ZEBRA_HEADER_SIZE);
@@ -136,7 +140,7 @@ nserv_create_header (struct stream *s, uint16_t cmd)
 }
 
 static void
-nserv_encode_interface (struct stream *s, struct interface *ifp)
+server_encode_interface (struct stream *s, struct interface *ifp)
 {
   /* Interface information. */
   stream_put (s, ifp->name, INTERFACE_NAMSIZ);
@@ -161,13 +165,12 @@ nserv_encode_interface (struct stream *s, struct interface *ifp)
 
 /* Close server client. */
 static void
-server_client_close (struct nserv *client)
+server_client_close (struct server *client)
 {
   /* Close file descriptor. */
   if (client->sock)
     {
       close (client->sock);
-      server_score_rib (client->sock);
       client->sock = -1;
     }
 
@@ -196,9 +199,9 @@ server_client_close (struct nserv *client)
 static void
 server_client_create (int sock)
 {
-  struct nserv *client;
+  struct server *client;
 
-  client = XCALLOC (0, sizeof (struct nserv));
+  client = XCALLOC (0, sizeof (struct server));
 
   /* Make client input/output buffer. */
   client->sock = sock;
@@ -218,7 +221,7 @@ static int
 server_client_read (struct thread *thread)
 {
   int sock;
-  struct nserv *client;
+  struct server *client;
   size_t already;
   uint16_t length, command;
   uint8_t marker, version;
@@ -316,7 +319,7 @@ server_client_read (struct thread *thread)
 
   //if (IS_ZEBRA_DEBUG_PACKET && IS_ZEBRA_DEBUG_RECV)
   //  zlog_debug ("server message received [%s] %d", 
-//	       nserv_command_string (command), length);
+//	       server_command_string (command), length);
 
   switch (command) 
     {
@@ -370,7 +373,7 @@ server_accept (struct thread *thread)
   return 0;
 }
 
-#ifdef HAVE_TCP_ZEBRA
+#if 1
 /* Make server's server socket. */
 static void
 server_serv ()
@@ -383,7 +386,7 @@ server_serv ()
 
   if (accept_sock < 0) 
     {
-      zlog_warn ("Can't create nserv stream socket: %s", 
+      zlog_warn ("Can't create server stream socket: %s", 
                  safe_strerror (errno));
       zlog_warn ("server can't provice full functionality due to above error");
       return;
@@ -392,7 +395,7 @@ server_serv ()
   memset (&route_type_oaths, 0, sizeof (route_type_oaths));
   memset (&addr, 0, sizeof (struct sockaddr_in));
   addr.sin_family = AF_INET;
-  addr.sin_port = htons (ZEBRA_PORT);
+  addr.sin_port = htons (server_port);
 #ifdef HAVE_STRUCT_SOCKADDR_IN_SIN_LEN
   addr.sin_len = sizeof (struct sockaddr_in);
 #endif /* HAVE_STRUCT_SOCKADDR_IN_SIN_LEN */
@@ -401,7 +404,7 @@ server_serv ()
   sockopt_reuseaddr (accept_sock);
   sockopt_reuseport (accept_sock);
 
-  if ( nserv_privs.change(ZPRIVS_RAISE) )
+  if ( server_privs.change(ZPRIVS_RAISE) )
     zlog (NULL, LOG_ERR, "Can't raise privileges");
     
   ret  = bind (accept_sock, (struct sockaddr *)&addr, 
@@ -415,7 +418,7 @@ server_serv ()
       return;
     }
     
-  if ( nserv_privs.change(ZPRIVS_LOWER) )
+  if ( server_privs.change(ZPRIVS_LOWER) )
     zlog (NULL, LOG_ERR, "Can't lower privileges");
 
   ret = listen (accept_sock, 1);
@@ -454,7 +457,7 @@ server_serv_un (const char *path)
   sock = socket (AF_UNIX, SOCK_STREAM, 0);
   if (sock < 0)
     {
-      zlog_warn ("Can't create nserv unix socket: %s", 
+      zlog_warn ("Can't create server unix socket: %s", 
                  safe_strerror (errno));
       zlog_warn ("server can't provide full functionality due to above error");
       return;
@@ -499,16 +502,16 @@ server_serv_un (const char *path)
 
 
 static void
-server_event (enum event event, int sock, struct nserv *client)
+server_event (enum event event, int sock, struct server *client)
 {
   switch (event)
     {
     case ZEBRA_SERV:
-      thread_add_read (serverd.master, server_accept, client, sock);
+      thread_add_read (master, server_accept, client, sock);
       break;
     case ZEBRA_READ:
       client->t_read = 
-	thread_add_read (serverd.master, server_client_read, client, sock);
+	thread_add_read (master, server_client_read, client, sock);
       break;
     case ZEBRA_WRITE:
       /**/
@@ -524,11 +527,17 @@ server_init (void)
   serverd.client_list = list_new ();
 }
 
+void server_set_port (int port)
+{
+	server_port = port;
+	return 0;
+}
+
 /* Make server server socket, wiping any existing one (see bug #403). */
 void
-server_nserv_socket_init (char *path)
+server_socket_init (char *path)
 {
-#ifdef HAVE_TCP_ZEBRA
+#if 1
   server_serv ();
 #else
   server_serv_un (path ? path : ZEBRA_SERV_PATH);
