@@ -24,7 +24,6 @@ Boston, MA 02111-1307, USA.  */
 
 #include "memory.h"
 #include "log.h"
-#include <lib/version.h>
 #include "thread.h"
 #include "vector.h"
 #include "vty.h"
@@ -81,9 +80,7 @@ static struct cmd_node config_node =
 
 /* Default motd string. */
 static const char *default_motd =
-"        NetworkOS (version 0.1)  \r\n\
-" GIT_INFO "\r\n";
-
+"        NetworkOS (version 0.1)  \r\n";
 
 static const struct facility_map {
   int facility;
@@ -152,8 +149,8 @@ level_match(const char *s)
 void
 print_version (const char *progname)
 {
-  printf ("%s version %s\n", progname, QUAGGA_VERSION);
-  printf ("%s\n", QUAGGA_COPYRIGHT);
+  //printf ("%s version %s\n", progname, QUAGGA_VERSION);
+  //printf ("%s\n", QUAGGA_COPYRIGHT);
 }
 
 
@@ -2398,19 +2395,6 @@ DEFUN (config_end,
   return CMD_SUCCESS;
 }
 
-/* Show version. */
-DEFUN (show_version,
-       show_version_cmd,
-       "show version",
-       SHOW_STR
-       "Displays zebra version\n")
-{
-  vty_out (vty, "Quagga %s (%s).%s", QUAGGA_VERSION, host.name?host.name:"",
-	   VTY_NEWLINE);
-  vty_out (vty, "%s%s%s", QUAGGA_COPYRIGHT, GIT_INFO, VTY_NEWLINE);
-
-  return CMD_SUCCESS;
-}
 
 /* Help display function for all node. */
 DEFUN (config_help,
@@ -3485,7 +3469,6 @@ cmd_init (int terminal)
   install_node (&config_node, config_write_host);
 
   /* Each node's basic commands. */
-  install_element (VIEW_NODE, &show_version_cmd);
   if (terminal)
     {
       install_element (VIEW_NODE, &config_list_cmd);
@@ -3516,7 +3499,6 @@ cmd_init (int terminal)
       install_element (ENABLE_NODE, &copy_runningconfig_startupconfig_cmd);
     }
   install_element (ENABLE_NODE, &show_startup_config_cmd);
-  install_element (ENABLE_NODE, &show_version_cmd);
 
   if (terminal)
     {
