@@ -15,8 +15,10 @@
 #include "sockopt.h"
 #include "privs.h"
 #include "vtysh.h"
+#include "libclient.h"
+#include "libserv.h"
+#include "linklist.h"
 
-#include "zebra/connected.h"
 
 /* static prototypes */
 /* For interface multicast configuration. */
@@ -495,6 +497,18 @@ DEFUN (shutdown_if,
       return CMD_WARNING;
     }
   if_refresh (ifp);
+#endif
+#if 0
+extern struct server_t serverd;
+  struct stream *s;
+  struct listnode *node;
+  struct client *client;
+  for (ALL_LIST_ELEMENTS_RO (serverd.client_list, node, client)) {
+	  s = client->obuf;
+	  stream_reset (s);
+	  server_create_header (s, 1);
+	  server_send_message(client);
+  }
 #endif
   vty_out (vty, "Fixme: UnderDevelopment%s", VTY_NEWLINE);
   return CMD_SUCCESS;
