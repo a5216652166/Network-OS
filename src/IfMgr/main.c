@@ -47,6 +47,18 @@ struct zebra_privs_t ifMgrd_privs =
   .cap_num_i = 0
 };
 
+struct zebra_privs_t server_privs =
+{
+  .user = "root",
+  .group = "root",
+  .vty_group = "root",
+  .caps_p = _caps_p,
+  .cap_num_p = 2,
+  .cap_num_i = 0
+};
+
+
+
 /* Configuration file and directory. */
 char config_default[] = "/opt/NetworkOS/etc/ifMgrd.conf";
 char *config_file = NULL;
@@ -243,6 +255,7 @@ main (int argc, char **argv)
 
   /* Library initialization. */
   zprivs_init (&ifMgrd_privs);
+  memcpy (&server_privs, &ifMgrd_privs, sizeof (server_privs));
   signal_init (master, array_size(ifMgrd_signals), ifMgrd_signals);
 
   cmd_init (1);
@@ -270,7 +283,10 @@ main (int argc, char **argv)
   /* Pid file create. */
   pid_output (pid_file);
 
- // /* Create VTY's socket */
+  server_set_port (2611);
+  server_init ();
+  server_socket_init (NULL);
+  /* Create VTY's socket */
   vty_serv_sock (vty_addr, vty_port, "/opt/NetworkOS/etc/ifMgrd.vty");
 
   /* Print banner. */
