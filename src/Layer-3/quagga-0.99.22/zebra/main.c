@@ -40,6 +40,7 @@
 #include "zebra/irdp.h"
 #include "zebra/rtadv.h"
 #include "zebra/zebra_fpm.h"
+#include "libclient.h"
 
 /* Zebra instance */
 struct zebra_t zebrad =
@@ -186,9 +187,33 @@ sigusr1 (void)
 {
   zlog_rotate (NULL);
 }
-void ifmgr_event_callback_handler ()
+void ifmgr_event_callback_handler (int cmd, struct client *client, uint16_t length)
 {
-	printf ("Event handler called from RTM process\n");
+  	struct interface *ifp;
+	u_int32_t ifindex = -1;
+
+	/* Get interface index. */
+	ifindex = stream_getl (client->ibuf);
+	/* Lookup index. */
+	ifp = if_lookup_by_index (ifindex);
+	if (!ifp) {
+		zlog_warn ("Can't find interface by ifindex: %d ", ifindex);
+		return ;
+	}
+	//printf ("lookup index success for index : %d if name : %s\n", ifindex, ifp->name);
+
+	switch (cmd) {
+		case ZEBRA_INTERFACE_UP:
+			if_up (ifp);
+			break;
+		case ZEBRA_INTERFACE_DOWN:
+			if_down (ifp);
+			break;
+		default:
+			fprintf (stderr, "Error: Invalid command from IfMgr\n");
+			break;
+	}
+	//printf ("Event handler called from RTM process\n");
 }
 
 struct quagga_signal_t zebra_signals[] =
