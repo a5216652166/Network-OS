@@ -115,32 +115,5 @@ extern struct connected *zebra_interface_address_read (int, struct stream *);
 extern void zebra_interface_if_set_value (struct stream *, struct interface *);
 extern void zebra_router_id_update_read (struct stream *s, struct prefix *rid);
 void client_set_port (int port);
-#ifdef HAVE_IPV6
-/* IPv6 prefix add and delete function prototype. */
-
-struct zapi_ipv6
-{
-  u_char type;
-
-  u_char flags;
-
-  u_char message;
-
-  safi_t safi;
-
-  u_char nexthop_num;
-  struct in6_addr **nexthop;
-
-  u_char ifindex_num;
-  unsigned int *ifindex;
-
-  u_char distance;
-
-  u_int32_t metric;
-};
-
-extern int zapi_ipv6_route (u_char cmd, struct client *client, 
-                     struct prefix_ipv6 *p, struct zapi_ipv6 *api);
-#endif /* HAVE_IPV6 */
 
 #endif /* _ZEBRA_ZCLIENT_H */
