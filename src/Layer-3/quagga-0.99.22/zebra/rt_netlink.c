@@ -1986,7 +1986,7 @@ kernel_init (void)
 {
   unsigned long groups;
 
-  groups = RTMGRP_LINK | RTMGRP_IPV4_ROUTE | RTMGRP_IPV4_IFADDR;
+  groups =  RTMGRP_IPV4_ROUTE | RTMGRP_IPV4_IFADDR;
 #ifdef HAVE_IPV6
   groups |= RTMGRP_IPV6_ROUTE | RTMGRP_IPV6_IFADDR;
 #endif /* HAVE_IPV6 */
