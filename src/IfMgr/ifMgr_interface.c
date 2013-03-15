@@ -275,7 +275,7 @@ ifMgr_interface_delete_hook (struct interface *ifp)
 void
 if_refresh (struct interface *ifp)
 {
-  //if_get_flags (ifp);
+  if_get_flags (ifp);
 }
 
 /* Output prefix string to vty. */
@@ -316,6 +316,167 @@ DEFUN_NOSH (zebra_interface,
 
   return ret;
 }
+static void
+if_dump_vty (struct vty *vty, struct interface *ifp)
+{
+#ifdef HAVE_STRUCT_SOCKADDR_DL
+  struct sockaddr_dl *sdl;
+#endif /* HAVE_STRUCT_SOCKADDR_DL */
+  struct connected *connected;
+  struct listnode *node;
+  struct route_node *rn;
+  struct zebra_if *zebra_if;
+
+  zebra_if = ifp->info;
+
+  vty_out (vty, "Interface %s is ", ifp->name);
+  if (if_is_up(ifp)) {
+    vty_out (vty, "up, line protocol ");
+    
+    if (CHECK_FLAG(ifp->status, ZEBRA_INTERFACE_LINKDETECTION)) {
+      if (if_is_running(ifp))
+       vty_out (vty, "is up%s", VTY_NEWLINE);
+      else
+	vty_out (vty, "is down%s", VTY_NEWLINE);
+    } else {
+      vty_out (vty, "detection is disabled%s", VTY_NEWLINE);
+    }
+  } else {
+    vty_out (vty, "down%s", VTY_NEWLINE);
+  }
+
+  if (ifp->desc)
+    vty_out (vty, "  Description: %s%s", ifp->desc,
+	     VTY_NEWLINE);
+  if (ifp->ifindex == IFINDEX_INTERNAL)
+    {
+      vty_out(vty, "  pseudo interface%s", VTY_NEWLINE);
+      return;
+    }
+  else if (! CHECK_FLAG (ifp->status, ZEBRA_INTERFACE_ACTIVE))
+    {
+      vty_out(vty, "  index %d inactive interface%s", 
+	      ifp->ifindex, 
+	      VTY_NEWLINE);
+      return;
+    }
+
+  vty_out (vty, "  index %d metric %d mtu %d ",
+	   ifp->ifindex, ifp->metric, ifp->mtu);
+#ifdef HAVE_IPV6
+  if (ifp->mtu6 != ifp->mtu)
+    vty_out (vty, "mtu6 %d ", ifp->mtu6);
+#endif 
+  vty_out (vty, "%s  flags: %s%s", VTY_NEWLINE,
+           if_flag_dump (ifp->flags), VTY_NEWLINE);
+  
+  /* Hardware address. */
+#ifdef HAVE_STRUCT_SOCKADDR_DL
+  sdl = &ifp->sdl;
+  if (sdl != NULL && sdl->sdl_alen != 0)
+    {
+      int i;
+      u_char *ptr;
+
+      vty_out (vty, "  HWaddr: ");
+      for (i = 0, ptr = (u_char *)LLADDR (sdl); i < sdl->sdl_alen; i++, ptr++)
+        vty_out (vty, "%s%02x", i == 0 ? "" : ":", *ptr);
+      vty_out (vty, "%s", VTY_NEWLINE);
+    }
+#else
+  if (ifp->hw_addr_len != 0)
+    {
+      int i;
+
+      vty_out (vty, "  HWaddr: ");
+      for (i = 0; i < ifp->hw_addr_len; i++)
+	vty_out (vty, "%s%02x", i == 0 ? "" : ":", ifp->hw_addr[i]);
+      vty_out (vty, "%s", VTY_NEWLINE);
+    }
+#endif /* HAVE_STRUCT_SOCKADDR_DL */
+  
+  /* Bandwidth in kbps */
+  if (ifp->bandwidth != 0)
+    {
+      vty_out(vty, "  bandwidth %u kbps", ifp->bandwidth);
+      vty_out(vty, "%s", VTY_NEWLINE);
+    }
+
+#ifdef HAVE_PROC_NET_DEV
+  /* Statistics print out using proc file system. */
+  vty_out (vty, "    %lu input packets (%lu multicast), %lu bytes, "
+	   "%lu dropped%s",
+	   ifp->stats.rx_packets, ifp->stats.rx_multicast,
+	   ifp->stats.rx_bytes, ifp->stats.rx_dropped, VTY_NEWLINE);
+
+  vty_out (vty, "    %lu input errors, %lu length, %lu overrun,"
+	   " %lu CRC, %lu frame%s",
+	   ifp->stats.rx_errors, ifp->stats.rx_length_errors,
+	   ifp->stats.rx_over_errors, ifp->stats.rx_crc_errors,
+	   ifp->stats.rx_frame_errors, VTY_NEWLINE);
+
+  vty_out (vty, "    %lu fifo, %lu missed%s", ifp->stats.rx_fifo_errors,
+	   ifp->stats.rx_missed_errors, VTY_NEWLINE);
+
+  vty_out (vty, "    %lu output packets, %lu bytes, %lu dropped%s",
+	   ifp->stats.tx_packets, ifp->stats.tx_bytes,
+	   ifp->stats.tx_dropped, VTY_NEWLINE);
+
+  vty_out (vty, "    %lu output errors, %lu aborted, %lu carrier,"
+	   " %lu fifo, %lu heartbeat%s",
+	   ifp->stats.tx_errors, ifp->stats.tx_aborted_errors,
+	   ifp->stats.tx_carrier_errors, ifp->stats.tx_fifo_errors,
+	   ifp->stats.tx_heartbeat_errors, VTY_NEWLINE);
+
+  vty_out (vty, "    %lu window, %lu collisions%s",
+	   ifp->stats.tx_window_errors, ifp->stats.collisions, VTY_NEWLINE);
+#endif /* HAVE_PROC_NET_DEV */
+
+#ifdef HAVE_NET_RT_IFLIST
+#if defined (__bsdi__) || defined (__NetBSD__)
+  /* Statistics print out using sysctl (). */
+  vty_out (vty, "    input packets %qu, bytes %qu, dropped %qu,"
+	   " multicast packets %qu%s",
+	   ifp->stats.ifi_ipackets, ifp->stats.ifi_ibytes,
+	   ifp->stats.ifi_iqdrops, ifp->stats.ifi_imcasts,
+	   VTY_NEWLINE);
+
+  vty_out (vty, "    input errors %qu%s",
+	   ifp->stats.ifi_ierrors, VTY_NEWLINE);
+
+  vty_out (vty, "    output packets %qu, bytes %qu, multicast packets %qu%s",
+	   ifp->stats.ifi_opackets, ifp->stats.ifi_obytes,
+	   ifp->stats.ifi_omcasts, VTY_NEWLINE);
+
+  vty_out (vty, "    output errors %qu%s",
+	   ifp->stats.ifi_oerrors, VTY_NEWLINE);
+
+  vty_out (vty, "    collisions %qu%s",
+	   ifp->stats.ifi_collisions, VTY_NEWLINE);
+#else
+  /* Statistics print out using sysctl (). */
+  vty_out (vty, "    input packets %lu, bytes %lu, dropped %lu,"
+	   " multicast packets %lu%s",
+	   ifp->stats.ifi_ipackets, ifp->stats.ifi_ibytes,
+	   ifp->stats.ifi_iqdrops, ifp->stats.ifi_imcasts,
+	   VTY_NEWLINE);
+
+  vty_out (vty, "    input errors %lu%s",
+	   ifp->stats.ifi_ierrors, VTY_NEWLINE);
+
+  vty_out (vty, "    output packets %lu, bytes %lu, multicast packets %lu%s",
+	   ifp->stats.ifi_opackets, ifp->stats.ifi_obytes,
+	   ifp->stats.ifi_omcasts, VTY_NEWLINE);
+
+  vty_out (vty, "    output errors %lu%s",
+	   ifp->stats.ifi_oerrors, VTY_NEWLINE);
+
+  vty_out (vty, "    collisions %lu%s",
+	   ifp->stats.ifi_collisions, VTY_NEWLINE);
+#endif /* __bsdi__ || __NetBSD__ */
+#endif /* HAVE_NET_RT_IFLIST */
+}
+
 
 /* Show all or specified interface to vty. */
 DEFUN (show_interface, show_interface_cmd,
@@ -324,7 +485,6 @@ DEFUN (show_interface, show_interface_cmd,
        "Interface status and configuration\n"
        "Inteface name\n")
 {
-#if 0
   struct listnode *node;
   struct interface *ifp;
   
@@ -354,8 +514,6 @@ DEFUN (show_interface, show_interface_cmd,
   /* All interface print. */
   for (ALL_LIST_ELEMENTS_RO (iflist, node, ifp))
     if_dump_vty (vty, ifp);
-#endif
-  vty_out (vty, "Fixme: %s UnderDevelopment%s", argv[0], VTY_NEWLINE);
   return CMD_SUCCESS;
 }
 DEFUN (show_interface_desc,
@@ -410,7 +568,6 @@ DEFUN (multicast,
 {
   int ret;
   struct interface *ifp;
-#if 0
 
   ifp = (struct interface *) vty->index;
   if (CHECK_FLAG (ifp->status, ZEBRA_INTERFACE_ACTIVE))
@@ -423,8 +580,6 @@ DEFUN (multicast,
 	}
       if_refresh (ifp);
     }
-#endif
-  vty_out (vty, "Fixme: UnderDevelopment%s", VTY_NEWLINE);
   return CMD_SUCCESS;
 }
 
@@ -434,6 +589,20 @@ DEFUN (no_multicast,
        NO_STR
        "Unset multicast flag to interface\n")
 {
+  int ret;
+  struct interface *ifp;
+
+  ifp = (struct interface *) vty->index;
+  if (CHECK_FLAG (ifp->status, ZEBRA_INTERFACE_ACTIVE))
+    {
+      ret = if_unset_flags (ifp, IFF_MULTICAST);
+      if (ret < 0)
+	{
+	  vty_out (vty, "Can't unset multicast flag%s", VTY_NEWLINE);
+	  return CMD_WARNING;
+	}
+      if_refresh (ifp);
+    }
 
   return CMD_SUCCESS;
 }
@@ -488,7 +657,6 @@ DEFUN (shutdown_if,
 {
   int ret;
   struct interface *ifp;
-#if 0
   ifp = (struct interface *) vty->index;
   ret = if_unset_flags (ifp, IFF_UP);
   if (ret < 0)
@@ -497,20 +665,6 @@ DEFUN (shutdown_if,
       return CMD_WARNING;
     }
   if_refresh (ifp);
-#endif
-#if 0
-extern struct server_t serverd;
-  struct stream *s;
-  struct listnode *node;
-  struct client *client;
-  for (ALL_LIST_ELEMENTS_RO (serverd.client_list, node, client)) {
-	  s = client->obuf;
-	  stream_reset (s);
-	  server_create_header (s, 1);
-	  server_send_message(client);
-  }
-#endif
-  vty_out (vty, "Fixme: UnderDevelopment%s", VTY_NEWLINE);
   return CMD_SUCCESS;
 }
 
@@ -520,7 +674,6 @@ DEFUN (no_shutdown_if,
        NO_STR
        "Shutdown the selected interface\n")
 {
-#if 0
   int ret;
   struct interface *ifp;
 
@@ -532,8 +685,6 @@ DEFUN (no_shutdown_if,
       return CMD_WARNING;
     }
   if_refresh (ifp);
-#endif
-  vty_out (vty, "Fixme: UnderDevelopment%s", VTY_NEWLINE);
   return CMD_SUCCESS;
 }
 
