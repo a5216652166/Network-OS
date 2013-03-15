@@ -1804,7 +1804,7 @@ DEFSH (VTYSH_BGPD, no_aggregate_address_as_set_cmd_vtysh,
        "Aggregate prefix\n"
        "Generate AS set path information\n")
 
-DEFSH (VTYSH_ZEBRA, no_linkdetect_cmd_vtysh, 
+DEFSH (VTYSH_IFMGR, no_linkdetect_cmd_vtysh, 
        "no link-detect", 
        "Negate a command or set its defaults\n"
        "Disable link detection on interface\n")
@@ -3261,7 +3261,7 @@ DEFSH (VTYSH_BGPD, no_ip_extcommunity_list_expanded_all_cmd_vtysh,
        "Add a extended community list entry\n"
        "Extended Community list number (expanded)\n")
 
-DEFSH (VTYSH_ZEBRA, linkdetect_cmd_vtysh, 
+DEFSH (VTYSH_IFMGR, linkdetect_cmd_vtysh, 
        "link-detect", 
        "Enable link detection on interface\n")
 
@@ -12336,7 +12336,7 @@ DEFSH (VTYSH_OSPF6D, no_ipv6_ospf6_advertise_prefix_list_cmd_vtysh,
        "Filter prefix using prefix-list\n"
        )
 
-DEFSH (VTYSH_ZEBRA, multicast_cmd_vtysh, 
+DEFSH (VTYSH_IFMGR, multicast_cmd_vtysh, 
        "multicast", 
        "Set multicast flag to interface\n")
 
@@ -13351,7 +13351,7 @@ DEFSH (VTYSH_BGPD, clear_bgp_ipv6_external_out_cmd_vtysh,
        "Clear all external peers\n"
        "Soft reconfig outbound update\n")
 
-DEFSH (VTYSH_ZEBRA, no_multicast_cmd_vtysh, 
+DEFSH (VTYSH_IFMGR, no_multicast_cmd_vtysh, 
        "no multicast", 
        "Negate a command or set its defaults\n"
        "Unset multicast flag to interface\n")
