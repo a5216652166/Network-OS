@@ -492,7 +492,7 @@ client_read (struct thread *thread)
   switch (command)
     {
     default:
-	client->call_back (command, client, 0);
+	client->call_back (command, client, length);
       break;
     }
 
