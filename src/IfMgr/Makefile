@@ -10,6 +10,8 @@ IFMGRS_SRCS += $(IFMGRS_SRCC_DIR)/ifMgr_interface.c
 IFMGRS_SRCS += $(IFMGRS_SRCC_DIR)/if.c
 IFMGRS_SRCS += $(IFMGRS_SRCC_DIR)/if_netlink.c
 IFMGRS_SRCS += $(IFMGRS_SRCC_DIR)/rt_netlink.c
+IFMGRS_SRCS += $(IFMGRS_SRCC_DIR)/if_ioctl.c
+IFMGRS_SRCS += $(IFMGRS_SRCC_DIR)/if_notify.c
 
 IFMGRS_LIB_SRCS +=  $(IFMGRS_SRCC_DIR)/if_client.c
 
@@ -18,7 +20,7 @@ IFMGR_OBJ = $(IFMGRS_SRCS:.c=.o)
 
 CFLAGS +=   -I${TOPDIR}/src/System/Lib/qlib/  -DHAVE_INET_NTOP -DHAVE_SOCKLEN_T -DSYSCONFDIR=/opt/NetworkOS/etc -DHAVE_NETLINK
 
-IFMGR_LIBS = $(TOPDIR)/src/.libs/libqlib.a $(TOPDIR)/src/.libs/libserver.a
+IFMGR_LIBS = $(TOPDIR)/src/.libs/libqlib.a $(TOPDIR)/src/.libs/libserver.a $(TOPDIR)/src/.libs/libclient.a
 
 all:  $(IFMGR_OBJ) ifMgrd libifmgr.a
 
