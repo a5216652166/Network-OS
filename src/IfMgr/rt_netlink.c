@@ -836,7 +836,7 @@ void
 if_up (struct interface *ifp)
 {
   /* Notify the protocol daemons. */
-//  zebra_interface_up_update (ifp);
+  if_notify_interface_link_status (ifp, ZEBRA_INTERFACE_UP);
 
 }
 
@@ -846,7 +846,7 @@ void
 if_down (struct interface *ifp)
 {
   /* Notify to the protocol daemons. */
-  //zebra_interface_down_update (ifp);
+  if_notify_interface_link_status (ifp, ZEBRA_INTERFACE_DOWN);
 
 }
 /* Interface up information. */
