@@ -39,10 +39,13 @@ endif
 
 all:build
 
-libs:
-	cd quagga-0.99.22 && ./configure --prefix=/opt/NetworkOS/ --enable-vtysh --enable-fpm --enable-user=root --enable-group=root --enable-netlink --disable-doc --disable-tests  --enable-vty-group=root $(MODULES_DISABLE) && make -C lib
+configure:
+	cd quagga-0.99.22 && test -s config.h || ./configure --prefix=/opt/NetworkOS/ --enable-vtysh --enable-fpm --enable-user=root --enable-group=root --enable-netlink --disable-doc --disable-tests  --enable-vty-group=root $(MODULES_DISABLE)
 
-build:
+libs:configure
+	 cd quagga-0.99.22 && make -C lib
+
+build:configure libs
 	 cd quagga-0.99.22 && make && make install DESTDIR=${TOPDIR}/final/
 
 clean:
