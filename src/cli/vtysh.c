@@ -1321,7 +1321,7 @@ ALIAS (vtysh_exit_line_vty,
        "quit",
        "Exit current mode and down to previous mode\n")
 
-DEFUNSH (VTYSH_IFMGR,
+DEFUNSH (VTYSH_IFMGR | VTYSH_ZEBRA,
 	 vtysh_interface,
 	 vtysh_interface_cmd,
 	 "interface IFNAME",
