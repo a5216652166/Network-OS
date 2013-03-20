@@ -30,53 +30,8 @@ static int try_connect(struct process_info *dmn);
 static void try_restart(struct process_info *dmn);
 static inline pid_t restart_process (struct process_info *process);
 
-typedef enum
-{
-  MODE_MONITOR = 0,
-  MODE_GLOBAL_RESTART,
-  MODE_SEPARATE_RESTART,
-  MODE_PHASED_ZEBRA_RESTART,
-  MODE_PHASED_ALL_RESTART
-} watch_mode_t;
-
-static const char *mode_str[] =
-{
-  "monitor",
-  "global restart",
-  "individual daemon restart",
-  "phased zebra restart",
-  "phased global restart for any failure",
-};
-
-typedef enum
-{
-  PHASE_NONE = 0,
-  PHASE_STOPS_PENDING,
-  PHASE_WAITING_DOWN,
-  PHASE_ZEBRA_RESTART_PENDING,
-  PHASE_WAITING_ZEBRA_UP
-} restart_phase_t;
-
-static const char *phase_str[] =
-{
-  "None",
-  "Stop jobs running",
-  "Waiting for other daemons to come down",
-  "Zebra restart job running",
-  "Waiting for zebra to come up",
-  "Start jobs running",
-};
-
-#define PHASE_TIMEOUT (3*gs.restart_timeout)
-
-
-
-
 static struct global_state
 {
-  watch_mode_t mode;
-  restart_phase_t phase;
-  struct thread *t_phase_hanging;
   const char *vtydir;
   long period;
   long timeout;
@@ -84,7 +39,6 @@ static struct global_state
   long min_restart_interval;
   long max_restart_interval;
   int do_ping;
-  struct daemon *daemons;
   const char *restart_command;
   const char *start_command;
   const char *stop_command;
@@ -95,8 +49,6 @@ static struct global_state
   int numpids;
   int numdown;		/* # of daemons that are not UP or UNRESPONSIVE */
 } gs = {
-  .mode = MODE_MONITOR,
-  .phase = PHASE_NONE,
   .vtydir = VTYDIR,
   .period = 1000*DEFAULT_PERIOD,
   .timeout = DEFAULT_TIMEOUT,
@@ -177,32 +129,13 @@ static struct timeval * time_elapsed(struct timeval *result, const struct timeva
 	return result;
 }
 
-static int restart_kill(struct thread *t_kill)
-{
-	struct process_info *process = THREAD_ARG(t_kill);
-	struct timeval delay;
-
-	time_elapsed(&delay,&process->restart.time);
-
-	zlog_warn("Warning: %s child process %d still running after "
-			"%ld seconds, sending signal %d", process->name,
-			(int)process->pid,delay.tv_sec,
-			(process->restart.kills ? SIGKILL : SIGTERM));
-
-	kill(-process->pid,(process->restart.kills ? SIGKILL : SIGTERM));
-
-	process->restart.kills++;
-	process->restart.t_kill = thread_add_timer(master,restart_kill, process,
-			process->restart_timeout);
-	return 0;
-}
-
 static struct process_info * find_process_by_pid (pid_t child)
 {
 	int i = 0;
 	while (process[i].pid) {
 		if (process[i].pid == child)
 			return &process[i];
+		i++;
 	}
 	return NULL;
 }
@@ -226,8 +159,6 @@ static void sigchild(void)
 	if ((process = find_process_by_pid (child)) != NULL) {
 		name = process->name;
 		process->pid = 0;
-		//thread_cancel(process->restart.t_kill);
-		//process->restart.t_kill = NULL;
 		/* Update restart time to reflect the time the command completed. */
 		gettimeofday(&process->restart.time,NULL);
 	}
@@ -521,15 +452,6 @@ static int try_connect(struct process_info *dmn)
 	return 1;
 }
 
-static int phase_hanging(struct thread *t_hanging)
-{
-	gs.t_phase_hanging = NULL;
-	zlog_err("Phase [%s] hanging for %ld seconds, aborting phased restart",
-			phase_str[gs.phase],PHASE_TIMEOUT);
-	gs.phase = PHASE_NONE;
-	return 0;
-}
-
 static void try_restart(struct process_info *dmn)
 {
 	dmn->pid = restart_process (dmn);
@@ -593,37 +515,6 @@ static void sigint(void)
 	zlog_notice("Terminating on signal");
 	exit(0);
 }
-
-static int valid_command(const char *cmd)
-{
-	char *p;
-
-	return ((p = strchr(cmd,'%')) != NULL) && (*(p+1) == 's') && !strchr(p+1,'%');
-}
-
-/* This is an ugly hack to circumvent problems with passing command-line
-   arguments that contain spaces.  The fix is to use a configuration file. */
-	static char *
-translate_blanks(const char *cmd, const char *blankstr)
-{
-	char *res;
-	char *p;
-	size_t bslen = strlen(blankstr);
-
-	if (!(res = strdup(cmd)))
-	{
-		perror("strdup");
-		exit(1);
-	}
-	while ((p = strstr(res,blankstr)) != NULL)
-	{
-		*p = ' ';
-		if (bslen != 1)
-			memmove(p+1,p+bslen,strlen(p+bslen)+1);
-	}
-	return res;
-}
-
 static inline void kill_process (struct process_info *process)
 {
 	if (process->pid)
@@ -694,8 +585,20 @@ int main (int argc, char **argv)
 	int i = 0;
 	int pid = 0;
   	const char *pidfile = DEFAULT_PIDFILE;
+	struct thread thread;
+  	char *progname, *p;
 	
 	init_signals ();
+
+	/* Set umask before anything for security */
+	umask (0027);
+
+	/* Get program name. */
+	progname = ((p = strrchr (argv[0], '/')) ? ++p : argv[0]);
+
+	/* First of all we need logging init. */
+	zlog_default = openzlog (progname, ZLOG_NETOSMGR,
+			         LOG_CONS|LOG_NDELAY|LOG_PID, LOG_USER);
 
 	master = thread_master_create();
 
@@ -712,15 +615,7 @@ int main (int argc, char **argv)
 	if (creat("/opt/NetworkOS/NwtMgrDone", S_IRWXU) < 0)
 		system ("echo 1>  /opt/NetworkOS/NwtMgrDone");
 
-	{
-		struct thread thread;
-
-		while (thread_fetch (master, &thread))
-			thread_call (&thread);
-	}
-
-	//while (1) {
-	//	do_process_monitor ();
-	//	sleep (1);
-	//}
+	while (thread_fetch (master, &thread))
+		thread_call (&thread);
+	return 0;
 }
