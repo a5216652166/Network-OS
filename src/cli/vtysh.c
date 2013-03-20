@@ -36,6 +36,8 @@
 #include "log.h"
 #include "bgpd/bgp_vty.h"
 
+#define VCLIENT_MAX_RETRIES 5
+#define VCLIENT_RECONNECT_TIMEOUT  1 /*in secs*/
 /* Struct VTY. */
 struct vty *vty;
 
@@ -49,6 +51,8 @@ struct vtysh_client
   const char *name;
   int flag;
   const char *path;
+  void   *reconnect_timer;
+  int    max_retries;
 } vtysh_client[] =
 {
   { .fd = -1, .name = "zebra", .flag = VTYSH_ZEBRA, .path = ZEBRA_VTYSH_PATH},
@@ -71,6 +75,24 @@ static struct vtysh_client *ripd_client = NULL;
 int vtysh_writeconfig_integrated = 0;
 
 extern char config_default[];
+extern struct thread_master *master;
+static int vtysh_connect (struct vtysh_client *vclient);
+
+static void vclient_reconnect_server (void *client_reconnect)
+{
+	struct vtysh_client *vclient = (struct vtysh_client *)client_reconnect;  
+
+	if (vtysh_connect (vclient)) {
+		if (vclient->max_retries >= VCLIENT_MAX_RETRIES) {
+			return;
+		}
+		vclient->reconnect_timer = start_sec_timer (VCLIENT_RECONNECT_TIMEOUT, vclient,
+				vclient_reconnect_server, 0);
+		vclient->max_retries++;
+	}
+
+	vclient->max_retries = 0;
+}
 
 static void
 vclient_close (struct vtysh_client *vclient)
@@ -82,6 +104,9 @@ vclient_close (struct vtysh_client *vclient)
 	      vclient->name);
       close (vclient->fd);
       vclient->fd = -1;
+      /*If a proces got killed and connect is closed Try to reconnect after 1 sec*/
+      vclient->reconnect_timer = start_sec_timer (VCLIENT_RECONNECT_TIMEOUT, vclient, 
+					    vclient_reconnect_server, 0);
     }
 }
 
