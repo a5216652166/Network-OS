@@ -440,9 +440,9 @@ int show_cpu_usage (void)
 	register struct list_head *node = NULL;
 	register task_t  *tskinfo = NULL;
 
-	cli_printf
+	printf
 		("\n Task Name         CPU User        System \n");
-	cli_printf
+	printf
 		("\r ---------         --------        -------\n");
 
 
@@ -464,7 +464,7 @@ int show_cpu_usage (void)
 
 		calc_cpu_usage (&curr, &tskinfo->cpu_stats, &user_usage, &system_usage , &tcpu) ;
 
-		cli_printf (" %-16s    %-8.1f       %-8.1f\n", tskinfo->task_name, user_usage * 2, system_usage);
+		printf (" %-16s    %-8.1f       %-8.1f\n", tskinfo->task_name, user_usage * 2, system_usage);
 	}
 	return 0;
 }
