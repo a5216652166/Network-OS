@@ -40,7 +40,7 @@ endif
 all:build
 
 configure:
-	cd quagga-0.99.22 && test -s config.h || ./configure --prefix=/opt/NetworkOS/ --enable-vtysh --enable-fpm --enable-user=root --enable-group=root --enable-netlink --disable-doc --disable-tests  --enable-vty-group=root $(MODULES_DISABLE)
+	cd quagga-0.99.22 && test -s config.h || ./configure --prefix=/opt/NetworkOS/ --enable-vtysh --enable-fpm --enable-user=root --enable-group=root --enable-netlink --disable-doc --disable-tests  --enable-vty-group=root $(MODULES_DISABLE) --enable-tcp-zebra
 
 libs:configure
 	 cd quagga-0.99.22 && make -C lib
