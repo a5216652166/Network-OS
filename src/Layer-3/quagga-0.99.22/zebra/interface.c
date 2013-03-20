@@ -922,6 +922,46 @@ DEFUN (show_interface, show_interface_cmd,
   return CMD_SUCCESS;
 }
 
+DEFUN (show_ip_interface_desc, show_ip_interface_desc_cmd,
+       "show ip interface",
+       "Show running system information\n"
+       "IP information\n"
+       "Interface status and configuration\n")
+{
+  struct listnode *node;
+  struct interface *ifp;
+  
+#ifdef HAVE_PROC_NET_DEV
+  /* If system has interface statistics via proc file system, update
+     statistics. */
+  ifstat_update_proc ();
+#endif /* HAVE_PROC_NET_DEV */
+#ifdef HAVE_NET_RT_IFLIST
+  ifstat_update_sysctl ();
+#endif /* HAVE_NET_RT_IFLIST */
+
+  /* Specified interface print. */
+  if (argc != 0)
+    {
+      ifp = if_lookup_by_name (argv[0]);
+      if (ifp == NULL) 
+	{
+	  vty_out (vty, "%% Can't find interface %s%s", argv[0],
+		   VTY_NEWLINE);
+	  return CMD_WARNING;
+	}
+      if_dump_vty (vty, ifp);
+      return CMD_SUCCESS;
+    }
+
+  /* All interface print. */
+  for (ALL_LIST_ELEMENTS_RO (iflist, node, ifp))
+    if_dump_vty (vty, ifp);
+
+  return CMD_SUCCESS;
+
+}
+
 DEFUN (show_interface_desc,
        show_interface_desc_cmd,
        "show interface description",
@@ -1624,6 +1664,7 @@ zebra_if_init (void)
   install_element (VIEW_NODE, &show_interface_cmd);
   install_element (ENABLE_NODE, &show_interface_cmd);
   install_element (ENABLE_NODE, &show_interface_desc_cmd);
+  install_element (ENABLE_NODE, &show_ip_interface_desc_cmd);
   install_element (CONFIG_NODE, &zebra_interface_cmd);
   install_element (CONFIG_NODE, &no_interface_cmd);
   install_default (INTERFACE_NODE);

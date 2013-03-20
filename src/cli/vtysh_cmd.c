@@ -4778,6 +4778,12 @@ DEFSH (VTYSH_IFMGR, show_interface_desc_cmd_vtysh,
        "Interface status and configuration\n"
        "Interface description\n")
 
+DEFSH (VTYSH_ZEBRA, show_ip_interface_desc_cmd_vtysh, 
+       "show ip interface", 
+       "Show running system information\n"
+       "IP information\n"
+       "Interface status and configuration\n")
+
 DEFSH (VTYSH_BGPD, show_bgp_neighbor_received_routes_cmd_vtysh, 
        "show bgp neighbors (A.B.C.D|X:X::X:X) received-routes", 
        "Show running system information\n"
@@ -19304,6 +19310,7 @@ vtysh_init_cmd ()
   install_element (ENABLE_NODE, &show_bgp_view_route_cmd_vtysh);
   install_element (ENABLE_NODE, &show_ipv6_mbgp_community3_exact_cmd_vtysh);
   install_element (ENABLE_NODE, &show_interface_desc_cmd_vtysh);
+  install_element (ENABLE_NODE, &show_ip_interface_desc_cmd_vtysh);
   install_element (ENABLE_NODE, &show_ip_ospf_route_cmd_vtysh);
   install_element (RESTRICTED_NODE, &show_ip_bgp_rsclient_prefix_cmd_vtysh);
   install_element (VIEW_NODE, &show_ipv6_mbgp_prefix_cmd_vtysh);
