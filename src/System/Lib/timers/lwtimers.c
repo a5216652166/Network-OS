@@ -47,11 +47,11 @@ void             show_uptime    (void);
 void    *        tick_service   (void *unused) ;
 void    *        tick_clock     (void *unused);
 int              init_timer_mgr (void);
-static inline void timer_expiry_action (TIMER_T * ptmr, int );
+static inline void timer_expiry_action (TIMER_T * ptmr);
 static unsigned int get_ticks (void);
 static void free_timer (TIMER_T *p); 
-static void update_times (int cpu);
-static int tm_process_tick_and_update_timers (int cpu);
+static void update_times (void);
+static int tm_process_tick_and_update_timers (void);
 static int timer_restart  (TIMER_T *p);
 static void handle_expired_timer (TIMER_T *ptmr);
 /****************************************************************/
@@ -67,20 +67,20 @@ static int          indx;
 /****************************************************************/
 
 
-static void timer_lock (int cpu)
+static void timer_lock (void)
 {
-	sync_lock (&(tmr_mgr + cpu)->core_timer);
+	sync_lock (&tmr_mgr->core_timer);
 }
 
-static void timer_unlock (int cpu)
+static void timer_unlock (void)
 {
-	sync_unlock (&(tmr_mgr + cpu)->core_timer);
+	sync_unlock (&tmr_mgr->core_timer);
 }
 
-static void timer_lock_create (int cpu)
+static void timer_lock_create (void)
 {
-	create_sync_lock (&(tmr_mgr + cpu)->core_timer);
-	timer_unlock (cpu);
+	create_sync_lock (&tmr_mgr->core_timer);
+	timer_unlock ();
 }
 
 #if 0
@@ -102,10 +102,10 @@ static void debug_timers (void)
 }
 #endif
 
-static void timer_add_sort (TIMER_T *new, int cpu)
+static void timer_add_sort (TIMER_T *new)
 {
 	TIMER_T *cur = NULL;
-	struct list_head *head = &(tmr_mgr + cpu)->timers_list;
+	struct list_head *head = &tmr_mgr->timers_list;
 
 	timers_count ++;
 	if (!list_empty(head)) {
@@ -134,16 +134,15 @@ static void timer_add_sort (TIMER_T *new, int cpu)
 		list_add (&new->next, head);
 }
 
-static void timer_add (TIMER_T *p, int cpu)
+static void timer_add (TIMER_T *p)
 {
-	timer_add_sort (p, cpu);
+	timer_add_sort (p);
 }
 
-void * start_timer (unsigned int tick, void *data, void (*handler) (void *), int flags)
+void * start_sec_timer (unsigned int secs, void *data, void (*handler) (void *), int flags)
 {
 	TIMER_T  *new = NULL;
 	int idx = 0;
-	int cpu = get_cpu ();
 
 
 	if ( !(idx = alloc_timer_id ())  || 
@@ -155,7 +154,41 @@ void * start_timer (unsigned int tick, void *data, void (*handler) (void *), int
 	new->idx = idx;
 	new->data = data;
 	new->time_out_handler = handler;
-	new->exp = (tmr_mgr + cpu)->ticks + tick;
+	new->exp = tmr_mgr->ticks + secs * SYS_MAX_TICKS_IN_SEC;
+	new->time = secs * SYS_MAX_TICKS_IN_SEC;
+
+	if (flags)
+		new->flags = flags;
+	else
+		new->flags = TIMER_ONCE;
+
+	timer_lock ();
+
+	timer_add (new);
+
+	new->is_running = 1;
+
+	timer_unlock ();
+
+	return (void *)new;
+}
+
+void * start_timer (unsigned int tick, void *data, void (*handler) (void *), int flags)
+{
+	TIMER_T  *new = NULL;
+	int idx = 0;
+
+
+	if ( !(idx = alloc_timer_id ())  || 
+             !(new = alloc_timer ())) {
+		return NULL;
+	}
+
+	INIT_LIST_HEAD (&new->next);
+	new->idx = idx;
+	new->data = data;
+	new->time_out_handler = handler;
+	new->exp = tmr_mgr->ticks + tick;
 	new->time = tick;
 
 	if (flags)
@@ -163,13 +196,13 @@ void * start_timer (unsigned int tick, void *data, void (*handler) (void *), int
 	else
 		new->flags = TIMER_ONCE;
 
-	timer_lock (cpu);
+	timer_lock ();
 
-	timer_add (new, cpu);
+	timer_add (new);
 
 	new->is_running = 1;
 
-	timer_unlock (cpu);
+	timer_unlock ();
 
 	return (void *)new;
 }
@@ -198,7 +231,6 @@ int setup_timer (void **p, void (*handler) (void *), void *data)
 int mod_timer (void *timer, unsigned int tick)
 {
 	TIMER_T  *p = (TIMER_T *)timer;
-	int cpu = 0;
 
 	if (!p)
 		return -1;
@@ -206,18 +238,16 @@ int mod_timer (void *timer, unsigned int tick)
 	if (p->is_running)
 		return -1;
 	
-	cpu = get_cpu ();
-
-	p->exp = (tmr_mgr + cpu)->ticks  + tick;
+	p->exp = tmr_mgr->ticks  + tick;
 	p->time =  tick;
 
-	timer_lock (cpu);
+	timer_lock ();
 
-	timer_add (p, cpu);
+	timer_add (p);
 
 	p->is_running = 1;
 
-	timer_unlock (cpu);
+	timer_unlock ();
 
 	return 0;
 }
@@ -230,15 +260,14 @@ static int alloc_timer_id (void)
 int stop_timer (void *timer)
 {
 	TIMER_T  *p = (TIMER_T *)timer;
-	int cpu = get_cpu ();
 
-	timer_lock (cpu);
+	timer_lock ();
 
 	if (p && p->is_running) {
 		p->is_running = 0;
 		list_del (&p->next);
 	}
-	timer_unlock (cpu);
+	timer_unlock ();
 	return 0;
 }
 
@@ -250,23 +279,23 @@ int del_timer (void *timer)
 
 static inline TIMER_T * alloc_timer (void)
 {
-	return tm_calloc (1, sizeof(TIMER_T));
+	return calloc (1, sizeof(TIMER_T));
 }
 
 static void free_timer (TIMER_T *p) 
 {
-	tm_free (p, sizeof(*p));
+	free (p);
 }
 
-static void update_times (int cpu)
+static void update_times ()
 {
-	timer_lock (cpu);
+	timer_lock ();
 
-	(tmr_mgr + cpu)->ticks++;
+	tmr_mgr->ticks++;
 
-     	tm_process_tick_and_update_timers (cpu);
+     	tm_process_tick_and_update_timers ();
 
-	timer_unlock (cpu);
+	timer_unlock ();
 }
 
 unsigned int sys_now (void)
@@ -280,7 +309,7 @@ unsigned int get_secs (void)
 
 static unsigned int get_ticks (void)
 {
-	return (tmr_mgr + get_cpu ())->ticks ;
+	return tmr_mgr->ticks ;
 }
 
 static unsigned int get_mins (void)
@@ -312,13 +341,10 @@ void * tick_clock (void *unused)
 {
 	register clock_t    start, end;
 	register int        tick = 0;
-	long                 cpu = (long) unused;
 	
-	cpu_bind (cpu);
+	timer_lock_create ();
 
-	timer_lock_create (cpu);
-
-	INIT_LIST_HEAD (&(tmr_mgr + cpu)->timers_list);
+	INIT_LIST_HEAD (&tmr_mgr->timers_list);
 
 	for (;;) {
 
@@ -332,7 +358,7 @@ void * tick_clock (void *unused)
 			tick = 1;
 
 		while (tick--) {
-			update_times (cpu); 
+			update_times (); 
 		}
 	}
 	return NULL;
@@ -342,19 +368,13 @@ void * tick_clock (void *unused)
 int init_timer_mgr (void)
 {
 	tmtaskid_t task_id = 0;
-	long      max_cpus = get_max_cpus ();
 	long       i = 0;
 
-	tmr_mgr = tm_malloc (sizeof (struct timer_mgr) * max_cpus);
+	tmr_mgr = malloc (sizeof (struct timer_mgr));
 
-	while (i < max_cpus) {
-		char task_name[8];
-		sprintf (task_name, "TMR-%ld", i);
-		if (task_create (task_name, 99, TSK_SCHED_RR, 32000,
-				tick_clock, NULL, (void *)i, &task_id) == TSK_FAILURE) {
-			return FAILURE;
-		}
-		i++;
+	if (task_create ("TMRMGR", 99, TSK_SCHED_RR, 32000,
+			  tick_clock, NULL, (void *)i, &task_id) == TSK_FAILURE) {
+		return FAILURE;
 	}
 
 	return SUCCESS;
@@ -364,17 +384,16 @@ int init_timer_mgr (void)
 
 static int timer_restart  (TIMER_T *p)
 {
-	int cpu = get_cpu ();
 
-	timer_lock (cpu);
+	timer_lock ();
 
-	p->exp = p->time + (tmr_mgr + cpu)->ticks ;
+	p->exp = p->time + tmr_mgr->ticks ;
 	
-	timer_add (p, cpu);
+	timer_add (p);
 
 	p->is_running = 1;
 
-	timer_unlock (cpu);
+	timer_unlock ();
 
 	return 0;
 }
@@ -394,30 +413,30 @@ static void handle_expired_timer (TIMER_T *ptmr)
 	}
 }
 
-static void timer_expiry_action (TIMER_T * ptmr, int cpu)
+static void timer_expiry_action (TIMER_T * ptmr)
 {
 	ptmr->is_running = 0;
-	timer_unlock (cpu);
+	timer_unlock ();
 	handle_expired_timer (ptmr);
-	timer_lock (cpu);
+	timer_lock ();
 }
 
 
-static int tm_process_tick_and_update_timers (int cpu)
+static int tm_process_tick_and_update_timers ()
 {
 	TIMER_T *p, *n;
-	struct list_head *head = &(tmr_mgr + cpu)->timers_list;
+	struct list_head *head = &tmr_mgr->timers_list;
 
 	list_for_each_entry_safe(p, n, head, next) {
-		int diff = p->exp - (tmr_mgr + cpu)->ticks;
+		int diff = p->exp - tmr_mgr->ticks;
 		if (diff <= 0) {
 #ifdef TIMER_DBG
-			printf ("Delete timer : %d %d %d\n", (tmr_mgr + cpu)->ticks, p->exp, diff);
+			printf ("Delete timer : %d %d %d\n", tmr_mgr->ticks, p->exp, diff);
 #endif
 			timers_count--;
 			list_del (&p->next);
 			INIT_LIST_HEAD (&p->next);
-			timer_expiry_action (p, cpu);
+			timer_expiry_action (p);
 			continue;
 		} 
 	}
