@@ -292,6 +292,7 @@ main (int argc, char **argv, char **env)
   /* Signal and others. */
   vtysh_signal_init ();
 
+  init_timer_mgr ();
   /* Make vty structure and register commands. */
   vtysh_init_vty ();
   vtysh_init_cmd ();
