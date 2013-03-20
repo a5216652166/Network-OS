@@ -226,8 +226,8 @@ static void sigchild(void)
 	if ((process = find_process_by_pid (child)) != NULL) {
 		name = process->name;
 		process->pid = 0;
-		thread_cancel(process->restart.t_kill);
-		process->restart.t_kill = NULL;
+		//thread_cancel(process->restart.t_kill);
+		//process->restart.t_kill = NULL;
 		/* Update restart time to reflect the time the command completed. */
 		gettimeofday(&process->restart.time,NULL);
 	}
