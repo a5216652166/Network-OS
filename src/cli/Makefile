@@ -27,7 +27,7 @@ CFLAGS +=  -DSYSCONFDIR=\"/opt/NetworkOS/etc/\" -include ${TOPDIR}/src/Layer-3/q
 
 CLI_OBJ = $(CLIS_SRCS:.c=.o)
 
-CLI_LIBS =  $(TOPDIR)/src/.libs/libqlib.a
+CLI_LIBS =  $(TOPDIR)/src/.libs/libqlib.a $(TOPDIR)/src/.libs/libtimers.a $(TOPDIR)/src/.libs/libtask.a
 ifdef CONFIG_RIP
 CLI_LIBS += $(TOPDIR)/src/Layer-3/quagga-0.99.22/ripngd/libripng.a  \
             $(TOPDIR)/src/Layer-3/quagga-0.99.22/ripd/librip.a 
@@ -50,7 +50,7 @@ all:  $(CLI_OBJ) cli
 $(CLI_OBJ) : %.o : %.c Makefile
 	$(CC) -c $(CFLAGS) $< -o $@
 cli: $(CLIS_OBJ)
-	$(CC) $(LD_FLAGS) -o cli $(CLI_OBJ) $(CLI_LIBS) -lreadline -lrt -lcrypt  -lcap
+	$(CC) $(LD_FLAGS) -o cli $(CLI_OBJ) $(CLI_LIBS) -lreadline -lpthread -lrt -lcrypt  -lcap
 	mkdir -p  ${TOPDIR}/final/opt/NetworkOS/sbin/
 	install -m755 cli ${TOPDIR}/final/opt/NetworkOS/sbin/	
 	chmod u+s ${TOPDIR}/final/opt/NetworkOS/sbin/cli
