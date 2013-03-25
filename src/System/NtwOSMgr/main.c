@@ -18,7 +18,7 @@
 #define DEFAULT_LOGLEVEL	LOG_INFO
 #define DEFAULT_MIN_RESTART	60
 #define DEFAULT_MAX_RESTART	600
-#define PATH_WATCHQUAGGA_PID "/opt/NetworkOS/etc/watchquagga.pid"
+#define PATH_WATCHQUAGGA_PID "/opt/NetworkOS/etc/nosMgr.pid"
 #define DEFAULT_PIDFILE		PATH_WATCHQUAGGA_PID
 #define VTYDIR			"/opt/NetworkOS/etc"
 
@@ -62,6 +62,7 @@ static struct global_state
 struct thread_master *master;
 
 struct process_info process[] = {
+	{"LOGGER", "/opt/NetworkOS/sbin/logger", "logger", "-u", "root", NULL, 0, 0},
 	{"IFMGR", "/opt/NetworkOS/sbin/ifMgrd", "ifMgrd", "-u", "root", NULL, 0, 0},
 #ifdef CONFIG_STP
 	{"STP", "/opt/NetworkOS/sbin/stpd", "stp", "-u", "root", NULL, 0, 0},

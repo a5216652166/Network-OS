@@ -17,6 +17,7 @@ ifdef CONFIG_LAYER3
 	make -C Layer-3
 endif
 	make -C cli
+	make -C logger
 clean:
 	rm -rf ${TOPDIR}/src/.libs/
 	make -C cli clean
