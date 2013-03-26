@@ -17340,6 +17340,16 @@ DEFSH (VTYSH_OSPF6D, show_ipv6_ospf6_database_router_cmd_vtysh,
        "Any Link state ID\n"
        "Specify Advertising Router as IPv4 address notation\n"
       )
+DEFSH (VTYSH_NOSMGR, show_process_cmd, 
+       "show process", 
+       "Show running system information\n"
+       "Process information\n")
+
+DEFSH (VTYSH_NOSMGR, show_process_cpu_cmd, 
+       "show process cpu", 
+       "Show running system information\n"
+       "Process information\n"
+       "CPU usage\n")
 
 void
 vtysh_init_cmd ()
@@ -19310,6 +19320,8 @@ vtysh_init_cmd ()
   install_element (ENABLE_NODE, &show_bgp_view_route_cmd_vtysh);
   install_element (ENABLE_NODE, &show_ipv6_mbgp_community3_exact_cmd_vtysh);
   install_element (ENABLE_NODE, &show_interface_desc_cmd_vtysh);
+  install_element (ENABLE_NODE, &show_process_cmd);
+  install_element (ENABLE_NODE, &show_process_cpu_cmd);
   install_element (ENABLE_NODE, &show_ip_interface_desc_cmd_vtysh);
   install_element (ENABLE_NODE, &show_ip_ospf_route_cmd_vtysh);
   install_element (RESTRICTED_NODE, &show_ip_bgp_rsclient_prefix_cmd_vtysh);

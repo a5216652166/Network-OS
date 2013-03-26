@@ -21,3 +21,4 @@ ifmgr           2610/tcp
 ifmgrsrv        2611/tcp
 logger          2612/tcp
 stpd            2613/tcp
+nosMgr          2614/tcp

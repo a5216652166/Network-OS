@@ -44,11 +44,11 @@ struct restart_info
 
 static const char *state_str[] =
 {
-  "Init",
-  "Down",
-  "Connecting",
-  "Up",
-  "Unresponsive",
+  "INIT",
+  "DOWN",
+  "CONNECTING",
+  "UP",
+  "UNRESPONSIVE",
 };
 
 struct process_info {

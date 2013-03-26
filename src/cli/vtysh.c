@@ -63,7 +63,8 @@ struct vtysh_client
   { .fd = -1, .name = "bgpd", .flag = VTYSH_BGPD, .path = BGP_VTYSH_PATH},
   { .fd = -1, .name = "isisd", .flag = VTYSH_ISISD, .path = ISIS_VTYSH_PATH},
   { .fd = -1, .name = "babeld", .flag = VTYSH_BABELD, .path = BABEL_VTYSH_PATH},
-  { .fd = -1, .name = "ifMgrd", .flag = VTYSH_IFMGR, .path = "/opt/NetworkOS/etc/ifMgrd.vty"},
+  { .fd = -1, .name = "ifMgrd", .flag = VTYSH_IFMGR, .path = RUN_SOCK_PATH"ifMgrd.vty"},
+  { .fd = -1, .name = "nosMgr", .flag = VTYSH_NOSMGR, .path = RUN_SOCK_PATH"nosMgr.vty"},
 };
 
 

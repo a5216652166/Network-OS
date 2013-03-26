@@ -60,6 +60,7 @@ static struct global_state
 };
 
 struct thread_master *master;
+int  process_count = 0;
 
 struct process_info process[] = {
 	{"LOGGER", "/opt/NetworkOS/sbin/logger", "logger", "-u", "root", NULL, 0, 0},
@@ -600,11 +601,19 @@ int main (int argc, char **argv)
 	zlog_default = openzlog (progname, ZLOG_NETOSMGR,
 			         LOG_CONS|LOG_NDELAY|LOG_PID, LOG_USER);
 
+	process_count = sizeof (process) / sizeof (process[0]);
 	master = thread_master_create();
+
+	cmd_init (1);
+	vty_init (master);
+
+	cli_init ();
 
 	srandom(time(NULL));
 
 	pid_output (pidfile);
+
+  	vty_serv_sock (NULL, 2614, RUN_SOCK_PATH"nosMgr.vty");
 
         start_process ();
 
