@@ -20,7 +20,7 @@
 #define DEFAULT_MAX_RESTART	600
 #define PATH_WATCHQUAGGA_PID "/opt/NetworkOS/etc/nosMgr.pid"
 #define DEFAULT_PIDFILE		PATH_WATCHQUAGGA_PID
-#define VTYDIR			"/opt/NetworkOS/etc"
+#define VTYDIR			RUN_SOCK_PATH
 
 #define PING_TOKEN	"PING"
 
@@ -65,7 +65,7 @@ struct process_info process[] = {
 	{"LOGGER", "/opt/NetworkOS/sbin/logger", "logger", "-u", "root", NULL, 0, 0},
 	{"IFMGR", "/opt/NetworkOS/sbin/ifMgrd", "ifMgrd", "-u", "root", NULL, 0, 0},
 #ifdef CONFIG_STP
-	{"STP", "/opt/NetworkOS/sbin/stpd", "stp", "-u", "root", NULL, 0, 0},
+	{"STP", "/opt/NetworkOS/sbin/stpd", "stpd", "-u", "root", NULL, 0, 0},
 #endif
 #ifdef CONFIG_LAYER3
 	{"RTM", "/opt/NetworkOS/sbin/zebra", "zebra", "-u", "root", NULL, 0, 0},
@@ -386,8 +386,7 @@ static int try_connect(struct process_info *dmn)
 	struct sockaddr_un addr;
 	socklen_t len;
 
-	if (gs.loglevel > LOG_DEBUG+1)
-		zlog_debug("%s: attempting to connect",dmn->name);
+	zlog_debug("%s: attempting to connect",dmn->name);
 
 	dmn->connect_tries++;
 

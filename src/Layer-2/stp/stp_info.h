@@ -92,6 +92,10 @@ typedef struct mac_addr
 }MACADDRESS;
 
 
+enum {
+	IF_UP = 1,
+	IF_DOWN = 2
+};
 
 typedef struct mac_hdr {
   MACADDRESS dest;

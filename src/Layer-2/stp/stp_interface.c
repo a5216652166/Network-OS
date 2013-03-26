@@ -15,7 +15,6 @@
 #include "sockopt.h"
 #include "privs.h"
 
-#include "zebra/connected.h"
 
 /* static prototypes */
 

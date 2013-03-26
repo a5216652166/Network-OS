@@ -66,7 +66,7 @@ int retain_mode = 0;
 char *vty_addr = NULL;
 
 /* RIP VTY connection port. */
-int vty_port = 0;
+int vty_port = 2613;
 
 /* Master of threads. */
 struct thread_master *master;
@@ -108,7 +108,7 @@ static void
 sighup (void)
 {
   zlog_info ("SIGHUP received");
-  stp_clean ();
+  //stp_clean ();
   stp_reset ();
   zlog_info ("stpd restarting!");
 
@@ -126,9 +126,6 @@ static void
 sigint (void)
 {
   zlog_notice ("Terminating on signal");
-
-  if (! retain_mode)
-    stp_clean ();
 
   exit (0);
 }
@@ -263,7 +260,7 @@ main (int argc, char **argv)
   sort_node ();
 
   /* Get configuration file. */
-  vty_read_config (config_file, config_default);
+  //vty_read_config (config_file, config_default);
 
   /* Start execution only if not in dry-run mode */
   if(dryrun)
@@ -280,7 +277,7 @@ main (int argc, char **argv)
   pid_output (pid_file);
 
   /* Create VTY's socket */
-  vty_serv_sock (vty_addr, vty_port, "/opt/NetworkOS/etc/stpd.vty");
+  vty_serv_sock (vty_addr, vty_port, RUN_SOCK_PATH"stpd.vty");
 
   /* Print banner. */
   //zlog_notice ("RIPd %s starting: vty@%d", QUAGGA_VERSION, vty_port);

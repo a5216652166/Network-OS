@@ -110,7 +110,7 @@ int stp_create_stp_instance (uint16_t vlan_id, struct stp_instance **p)
 	if (vlan_id == VLAN_INVALID_ID) {
 		new = &stp_global_instance;
 	} else {
-		new = tm_malloc (sizeof(struct stp_instance));
+		new = malloc (sizeof(struct stp_instance));
 		if (!new) {
 			debug_stp ("STP Instance Creation failed\n");
 			return -1;
@@ -119,7 +119,7 @@ int stp_create_stp_instance (uint16_t vlan_id, struct stp_instance **p)
 	
 	if (stp_init_stp_instance (new, vlan_id) < 0) {
 		debug_stp ("STP Instance Creation failed ");
-		tm_free (new, sizeof(struct stp_instance));
+		free (new);
 		return -1;
 	}
 
@@ -136,7 +136,7 @@ int stp_delete_stp_instance (struct stp_instance *p)
 
 	list_del (&p->next);
 
-	tm_free (p, sizeof(*p));
+	free (p);
 	
 	return 0;
 }
@@ -149,7 +149,7 @@ int  stp_create_port (struct stp_instance *stp_inst, int port)
 
 	sync_lock (&stp_inst->br_lock);
 
-	p = tm_malloc (sizeof (struct stp_port_entry));
+	p = malloc (sizeof (struct stp_port_entry));
 
 	if (p) {
 		INIT_LIST_HEAD (&p->list);
@@ -722,11 +722,11 @@ static void stp_send_bpdu(struct stp_port_entry *p,  char *p_out,
 
 	llc_pdu_init_as_ui_cmd(p_out);
 
-	get_port_mac_address (p->port_no, smac);
+	//FIXME:get_port_mac_address (p->port_no, smac);
 
 	llc_mac_hdr_init (p_out, br_group_address, smac, 0x4, length);
 
-	send_packet (p_out, IF_INDEX(p->port_no), length + sizeof (MACHDR));
+	//FIXME:send_packet (p_out, IF_INDEX(p->port_no), length + sizeof (MACHDR));
 }
 
 void stp_send_config_bpdu(struct stp_port_entry *p, STP_BPDU_T *bpdu)

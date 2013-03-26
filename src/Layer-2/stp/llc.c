@@ -13,25 +13,25 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <string.h>
+#include <linux/if_ether.h>
 #include "stp_info.h"
-#include "lwip/def.h"
 
 int llc_mac_hdr_init (uint8_t *pkt, const uint8_t *daddr, const uint8_t *saddr, int type, int len)
 {
-        struct ether_hdr *eth = (struct ether_hdr *)pkt;
+        struct mac_hdr *eth = (struct mac_hdr *)pkt;
 
         if (type != ETH_P_802_3 && type != ETH_P_802_2)
-                eth->type = htons(type);
+                eth->len8023 = htons(type);
         else
-                eth->type = htons(len);
+                eth->len8023 = htons(len);
 
         if (!saddr)
                 saddr = 0;
 
-        memcpy(eth->smac.addr, saddr, ETH_ALEN);
+        memcpy(eth->src.addr, saddr, ETH_ALEN);
 
         if (daddr) {
-                memcpy(eth->dmac.addr, daddr, ETH_ALEN);
+                memcpy(eth->dest.addr, daddr, ETH_ALEN);
                 return 0;
         }
 

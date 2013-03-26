@@ -12,7 +12,6 @@
  */
 
 #include "stp_info.h"
-#include "ifmgmt.h"
 
 PORTID stp_make_port_id(uint8_t priority, uint16_t port_no);
 struct stp_instance * get_this_bridge_entry (uint16_t vlan_id);
@@ -22,21 +21,26 @@ int bridge_timer_relation (int fdelay, int max_age, int hello);
 
 extern struct stp_instance stp_global_instance;
 extern struct list_head  stp_instance_head;
+int bridge_timer_relation (int fdelay, int max_age, int hello)
+{
+	/* To support interoperability with legacy Bridges, 
+   	   a Bridge shall enforce the following relationships
+  	   2 × (Bridge_Forward_Delay – 1.0 seconds) >= Bridge_Max_Age
+	   Bridge_Max_Age >= 2 × (Bridge_Hello_Time + 1.0 seconds)
+	*/
 
+	if (((2 * (fdelay -1)) < max_age) ||  (max_age < (2 * (hello + 1))))
+	{
+                printf("Violates (2xFwdDly-1) >= MaxAge >= (2xHello+1)\n");
+		return -1;
+	}
+	return 0;
+}
 struct stp_instance * get_this_bridge_entry (uint16_t vlan_id)
 {
 	struct stp_instance *p = NULL;
 
-	if (vlan_id == VLAN_INVALID_ID) {
-		return &stp_global_instance;
-	}
-
-	list_for_each_entry(p, &stp_instance_head, next) {
-		if (p->vlan_id == vlan_id)
-			return p;
-	}
-	
-	return NULL;
+	return &stp_global_instance;
 }
 
 PORTID stp_make_port_id(uint8_t priority, uint16_t port_no)
@@ -54,14 +58,17 @@ static void stp_init_port(struct stp_port_entry *p)
 	p->config_pending = 0;
 	p->is_own_bpdu = 0;
 	p->enabled   = STP_ENABLED;
-	IF_STP_INFO(p->port_no) = p;
+	//IF_STP_INFO(p->port_no) = p;
 }
 
 void stp_enable_port(struct stp_port_entry *p)
 {
+/*FIXME:*/
+#if 0
 	if (get_port_oper_state (p->port_no) == IF_DOWN) {
 		return;
 	}
+#endif
 	stp_init_port(p);
 	stp_port_state_selection(p->br);
 }
@@ -116,7 +123,7 @@ void stp_disable (struct stp_instance *br)
 		if (p->state != DISABLED)
 			stp_disable_port(p);
 		list_del (&p->list);
-		tm_free (p, sizeof (*p));
+		free (p);
 	}
 
 	br->topology_change = 0;
@@ -190,13 +197,13 @@ int stp_set_bridge_hello_time (int hello , uint16_t vlan_id)
 
 	if (!br)	
 	{
-		cli_printf("Spanning tree not enabled\n");
+		printf("Spanning tree not enabled\n");
 		return -1;
 	}
 
 	if (hello < STP_MIN_HELLO_TIME || hello > STP_MAX_HELLO_TIME)
 	{
-		cli_printf ("Invaild Spanning tree Hello time. Valid range %d-%d\n",
+		printf ("Invaild Spanning tree Hello time. Valid range %d-%d\n",
 			STP_MIN_HELLO_TIME, STP_MAX_HELLO_TIME);
 		return -1;
 	}
@@ -218,13 +225,13 @@ int stp_set_bridge_forward_delay (int fwd_dly , uint16_t vlan_id)
 
 	if (!br)	
 	{
-		cli_printf("Spanning tree not enabled\n");
+		printf("Spanning tree not enabled\n");
 		return -1;
 	}
 
 	if (fwd_dly < STP_MIN_FORWARD_DELAY || fwd_dly > STP_MAX_FORWARD_DELAY)
 	{
-		cli_printf ("Invaild Spanning tree Forward Delay. Valid range %d-%d\n",
+		printf ("Invaild Spanning tree Forward Delay. Valid range %d-%d\n",
 			STP_MIN_FORWARD_DELAY, STP_MAX_FORWARD_DELAY);
 		return -1;
 	}
@@ -246,13 +253,13 @@ int stp_set_bridge_max_age (int max_age , uint16_t vlan_id)
 
 	if (!br)	
 	{
-		cli_printf("Spanning tree not enabled\n");
+		printf("Spanning tree not enabled\n");
 		return -1;
 	}
 
 	if (max_age < STP_MIN_MAX_AGE || max_age > STP_MAX_MAX_AGE)
 	{
-		cli_printf ("Invaild Spanning tree max age. Valid range %d-%d\n",
+		printf ("Invaild Spanning tree max age. Valid range %d-%d\n",
 			STP_MIN_MAX_AGE, STP_MAX_MAX_AGE);
 		return -1;
 	}
@@ -273,7 +280,7 @@ int stp_set_bridge_times (int fdly, int maxage, int htime, uint16_t vlan_id)
 
         if (!br)
         {
-                cli_printf("Spanning tree not enabled\n");
+                printf("Spanning tree not enabled\n");
                 return -1;
         }
 
@@ -331,6 +338,8 @@ void stp_set_path_cost(struct stp_port_entry *p, uint32_t path_cost)
 
 int stp_is_mac_learning_allowed (int port)
 {
+/*FIXME:*/
+#if  0
 	if (IF_STP_INFO (port)) {
 		if ((IF_STP_STATE(port) != LEARNING) && 
 		    (IF_STP_STATE(port) != FORWARDING)) {
@@ -339,6 +348,7 @@ int stp_is_mac_learning_allowed (int port)
 			return 0;
 		}	
 	}
+#endif
 	return 1;
 }
 
