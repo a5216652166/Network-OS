@@ -34,7 +34,7 @@ config BRIDGE_FDB
 
 config STP
 	bool "Enable Spanning Tree"
-	default n
+	default y
 	depends on BRIDGE_FDB
 	help
 	   Say Y here if you want STP to be enabled

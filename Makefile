@@ -138,8 +138,9 @@ src		:= $(srctree)
 obj		:= $(objtree)
 
 VPATH		:= $(srctree)$(if $(KBUILD_EXTMOD),:$(KBUILD_EXTMOD))
+RUN_SOCK_PATH   := /opt/NetworkOS/run/
 
-export srctree objtree VPATH TOPDIR
+export srctree objtree VPATH TOPDIR RUN_SOCK_PATH
 
 
 # Cross compiling and selecting different set of gcc/bin-utils
@@ -316,7 +317,7 @@ AFLAGS_KERNEL	=
 
 # Use LINUXINCLUDE when you must reference the include/ directory.
 # Needed to be compatible with the O= option
-CFLAGS		:= $(CFLAGS) $(INCLUDE) -DNETWORKOS_VERSION=\"${VERSION}.${PATCHLEVEL}.${SUBLEVEL}${EXTRAVERSION}\"  -DSYSCONFDIR=\"/opt/NetworkOS/etc/\"
+CFLAGS		:= $(CFLAGS) $(INCLUDE) -DNETWORKOS_VERSION=\"${VERSION}.${PATCHLEVEL}.${SUBLEVEL}${EXTRAVERSION}\"  -DSYSCONFDIR=\"/opt/NetworkOS/etc/\" -DRUN_SOCK_PATH=\"/opt/NetworkOS/run/\"
 # Added only to final link stage of NetworkOS binary
 CFLAGS_NetworkOS	:= $(CFLAGS_NetworkOS)
 CPPFLAGS	:= $(CPPFLAGS)

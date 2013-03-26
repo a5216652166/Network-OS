@@ -34,6 +34,7 @@ touch /opt/NetworkOS/etc/ripd.conf
 touch /opt/NetworkOS/etc/ripngd.conf
 touch /opt/NetworkOS/etc/stpd.conf
 
+mkdir -p /opt/NetworkOS/run
 
 /opt/NetworkOS/sbin/nosMgr &
 while [ ! -f  /opt/NetworkOS/NwtMgrDone ];

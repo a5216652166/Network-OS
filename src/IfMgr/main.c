@@ -289,7 +289,7 @@ main (int argc, char **argv)
   server_init ();
   server_socket_init (NULL);
   /* Create VTY's socket */
-  vty_serv_sock (vty_addr, vty_port, "/opt/NetworkOS/etc/ifMgrd.vty");
+  vty_serv_sock (vty_addr, vty_port, RUN_SOCK_PATH"ifMgrd.vty");
 
   /* Print banner. */
   //zlog_notice ("RIPd %s starting: vty@%d", QUAGGA_VERSION, vty_port);

@@ -5,14 +5,15 @@ all:
 ifdef CONFIG_LAYER3
 	make -C Layer-3 libs
 endif
-ifdef CONFIG_LAYER2
-	make -C Layer-2/
-endif
 ifdef CONFIG_APPS
 	make -C Apps
 endif
 	make -C System/
 	make -C IfMgr
+ifdef CONFIG_LAYER2
+	make -C Layer-2/
+endif
+
 ifdef CONFIG_LAYER3
 	make -C Layer-3
 endif
