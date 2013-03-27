@@ -115,12 +115,6 @@ int main (int argc, char **argv)
 	cmd_init (1);
 	vty_init (master);
 
-	if (daemon (0, 0) < 0)
-	{
-		zlog_err("logger daemon failed: %s", strerror(errno));
-		exit (1);
-	}
-
 	pid_output (pid_file);
 
   	vty_serv_sock (NULL, 2612, RUN_SOCK_PATH"logger.vty");

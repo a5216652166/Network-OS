@@ -609,6 +609,8 @@ int main (int argc, char **argv)
 
 	cli_init ();
 
+	sort_node ();
+
 	srandom(time(NULL));
 
 	pid_output (pidfile);

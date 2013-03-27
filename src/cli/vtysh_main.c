@@ -398,7 +398,7 @@ main (int argc, char **argv, char **env)
   vty_hello (vty);
 
   /* Enter into enable node. */
-  vtysh_execute ("enable");
+  //vtysh_execute ("enable");
 
   /* Preparation for longjmp() in sigtstp(). */
   sigsetjmp (jmpbuf, 1);

@@ -52,8 +52,6 @@ DEFUN (show_process_cpu, show_process_cpu_cmd,
 
 void cli_init (void)
 {
-  install_element (VIEW_NODE, &show_process_cmd);
   install_element (ENABLE_NODE, &show_process_cmd);
-  install_element (VIEW_NODE, &show_process_cpu_cmd);
   install_element (ENABLE_NODE, &show_process_cpu_cmd);
 }
